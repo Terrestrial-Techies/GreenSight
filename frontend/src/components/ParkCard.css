@@ -1,0 +1,143 @@
+.park-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 1.25rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+}
+
+.park-card:hover {
+  border-color: var(--primary);
+  box-shadow: 0 10px 25px -5px rgba(16, 185, 129, 0.1);
+  transform: translateY(-2px);
+}
+
+.park-card.selected {
+  border-color: var(--primary);
+  background-color: rgba(16, 185, 129, 0.03);
+}
+
+.park-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.75rem;
+}
+
+.park-header h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.access-badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.access-badge.paid {
+  background-color: rgba(245, 158, 11, 0.1);
+  color: #d97706;
+}
+
+.access-badge.free {
+  background-color: rgba(34, 197, 94, 0.1);
+  color: #16a34a;
+}
+
+.park-info {
+  margin-bottom: 1rem;
+}
+
+.park-location {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  margin-bottom: 0.5rem;
+}
+
+.park-meta {
+  display: flex;
+  gap: 1rem;
+}
+
+.last-updated {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.features-snapshot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+
+.feature-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: var(--background);
+  padding: 4px 10px;
+  border-radius: 8px;
+}
+
+.feature-name {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.status-green { background-color: var(--success); box-shadow: 0 0 8px var(--success); }
+.status-yellow { background-color: var(--accent); box-shadow: 0 0 8px var(--accent); }
+.status-red { background-color: var(--error); box-shadow: 0 0 8px var(--error); }
+.status-gray { background-color: var(--text-muted); }
+
+.park-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+}
+
+.btn-primary.mini, .btn-secondary.mini {
+  padding: 8px 12px;
+  font-size: 0.875rem;
+  flex: 1;
+}
+
+.btn-report {
+  width: 100%;
+  margin-top: 0.75rem;
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px dashed var(--primary);
+  background-color: transparent;
+  color: var(--primary);
+  font-weight: 600;
+  font-size: 0.875rem;
+  transition: all 0.2s;
+}
+
+.btn-report:hover {
+  background-color: var(--primary);
+  color: white;
+  border-style: solid;
+}
