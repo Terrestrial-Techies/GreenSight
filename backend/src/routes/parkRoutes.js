@@ -1,9 +1,9 @@
 const express = require("express");
 const router = express.Router();
-const { getAllParks } = require("../controllers/parkController");
+const supabase = require("../config/supabaseClient");
 const verifyToken = require("../middleware/authMiddleware");
 
-router.get("/", async (req, res) => {
+router.get("/", verifyToken, async (req, res) => {
   try {
     const { data, error } = await supabase
       .from("parks")
@@ -13,6 +13,7 @@ router.get("/", async (req, res) => {
 
     res.json(data);
   } catch (err) {
+    console.error(err);
     res.status(500).json({ error: "Failed to fetch parks" });
   }
 });
