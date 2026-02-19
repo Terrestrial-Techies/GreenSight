@@ -36,7 +36,9 @@ const SnapshotPanel = ({ park, onClose }) => {
             <span>AI Snapshot Summary</span>
           </div>
           <p>
-            {park.description} The park is currently <strong>{park.features.filter(f => f.status === 'Operational').length}/{park.features.length}</strong> features operational. 
+            {park.description} {park.features && park.features.length > 0 && (
+              <>The park is currently <strong>{park.features.filter(f => f.status === 'Operational').length}/{park.features.length}</strong> features operational.</>
+            )}
             Best time to visit for a quiet experience is usually early mornings.
           </p>
         </div>
@@ -48,7 +50,7 @@ const SnapshotPanel = ({ park, onClose }) => {
           </div>
           
           <div className="feature-status-list">
-            {park.features.map((feature, idx) => {
+            {park.features?.map((feature, idx) => {
               const status = getStatusLabel(feature.status);
               return (
                 <div key={idx} className="status-row">
@@ -60,6 +62,9 @@ const SnapshotPanel = ({ park, onClose }) => {
                 </div>
               );
             })}
+            {(!park.features || park.features.length === 0) && (
+              <p className="no-features">No feature details available.</p>
+            )}
           </div>
         </div>
 

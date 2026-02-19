@@ -31,7 +31,7 @@ const ParkCard = ({ park, isSelected, onClick }) => {
       </div>
 
       <div className="features-snapshot">
-        {park.features.slice(0, 3).map((feature, idx) => (
+        {park.features?.slice(0, 3).map((feature, idx) => (
           <div key={idx} className="feature-item">
             <span className="feature-name">{feature.name}</span>
             <span className={`status-dot ${getStatusClass(feature.status)}`}></span>
