@@ -8,14 +8,32 @@ const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Simulate login for now
-    login({ name: 'Tunde', email });
-    navigate('/');
+    setError('');
+    setLoading(true);
+
+    try {
+      const { authService } = await import('../services/api');
+      const data = await authService.login(email, password);
+      
+      // Save user and session (token is in data.session.access_token)
+      login({ 
+        email: data.session.user.email, 
+        token: data.session.access_token 
+      });
+      
+      navigate('/');
+    } catch (err) {
+      setError(err.response?.data?.error || 'Login failed. Please check your credentials.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -27,6 +45,8 @@ const Login = () => {
         </Link>
         <h2>Welcome Back</h2>
         <p className="auth-subtitle">Choose your next green escape in Lagos.</p>
+        
+        {error && <div className="auth-error-message">{error}</div>}
         
         <form onSubmit={handleSubmit}>
           <div className="input-group">
@@ -58,7 +78,9 @@ const Login = () => {
             </button>
           </div>
 
-          <button type="submit" className="btn-primary auth-submit">Login</button>
+          <button type="submit" className="btn-primary auth-submit" disabled={loading}>
+            {loading ? "Logging in..." : "Login"}
+          </button>
         </form>
 
         <p className="auth-footer">

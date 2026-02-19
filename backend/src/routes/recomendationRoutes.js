@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const verifyToken = require("../middleware/authMiddleware");
 const supabase = require("../config/supabaseClient");
-const { getRecommendations } = require("../services/recommendationService");
+const { getRecommendations } = require("../services/recomendationService");
 
 
 router.post("/", verifyToken, async (req, res) => {

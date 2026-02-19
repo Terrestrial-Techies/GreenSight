@@ -1,70 +1,73 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
 import ParkCard from '../components/ParkCard';
 import MapView from '../components/MapView';
 import SnapshotPanel from '../components/SnapshotPanel';
 import { RiSearchLine, RiFilter3Line, RiMapPinLine } from 'react-icons/ri';
 import './Home.css';
+import { parkService } from '../services/api';
 
 const Home = () => {
-  const [parks, setParks] = useState([
-    {
-      id: 1,
-      name: "Lufasi Nature Park",
-      location: "Lekki-Epe Expressway, Lagos",
-      access: "Paid",
-      price: "1000 NGN",
-      lastUpdated: "5 mins ago",
-      lat: 6.4531,
-      lng: 3.6015,
-      features: [
-        { name: "Walking Trails", status: "Operational" },
-        { name: "Pond", status: "Operational" },
-        { name: "Playground", status: "Maintenance" }
-      ],
-      description: "A serene escape from the Lagos bustle. Great for nature walks and quiet reflection."
-    },
-    {
-      id: 2,
-      name: "Freedom Park",
-      location: "Broad Street, Lagos Island",
-      access: "Paid",
-      price: "500 NGN",
-      lastUpdated: "12 mins ago",
-      lat: 6.4523,
-      lng: 3.3958,
-      features: [
-        { name: "Fountains", status: "Operational" },
-        { name: "Seating Areas", status: "Operational" },
-        { name: "Sports Courts", status: "Closed" }
-      ],
-      description: "Historical site turned leisure park. Excellent vibe for evening hangouts."
-    },
-    {
-      id: 3,
-      name: "Jhalobia Recreation Park",
-      location: "Ikeja, Lagos",
-      access: "Paid",
-      price: "2000 NGN",
-      lastUpdated: "1 hour ago",
-      lat: 6.5724,
-      lng: 3.3283,
-      features: [
-        { name: "Gardens", status: "Operational" },
-        { name: "Swings", status: "Operational" }
-      ],
-      description: "Beautifully landscaped gardens, perfect for photoshoots and family picnics."
-    }
-  ]);
-
+  const [parks, setParks] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [selectedPark, setSelectedPark] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+
+  // Fallback / Enhancement data (since backend is missing some fields for now)
+  const enhanceParkData = (backendParks) => {
+    return backendParks.map(park => ({
+      ...park,
+      // Handle both possible naming conventions from Supabase
+      lat: park.latitude || park.lat || 6.5244,
+      lng: park.longitude || park.lng || 3.3792,
+      name: park.name || "Unnamed Park",
+      access: park.access_type || "Public",
+      price: park.price || "Free",
+      lastUpdated: "Recently",
+      description: park.description || `A verified green space in Lagos with a confidence score of ${park.confidence_score || 0}%`
+    }));
+  };
+
+  useEffect(() => {
+    const fetchParks = async () => {
+      try {
+        setLoading(true);
+        const data = await parkService.getAllParks();
+        setParks(enhanceParkData(data));
+        setLoading(false);
+      } catch (err) {
+        let errorMsg = "Could not connect to the server. Please ensure the backend is running.";
+        if (err.response) {
+          errorMsg = `Server error (${err.response.status}): ${err.response.data?.message || err.message}`;
+        } else if (err.request) {
+          errorMsg = "No response from server. Check your connection or the backend port.";
+        }
+        setError(errorMsg);
+        setLoading(false);
+        console.error(err);
+      }
+    };
+
+    fetchParks();
+  }, []);
 
   return (
     <div className="home">
       <Navbar />
       <main className="main-content">
-        <section className="park-explorer">
+        {loading ? (
+          <div className="loading-state">
+            <div className="spinner"></div>
+            <p>Scanning green spaces in Lagos...</p>
+          </div>
+        ) : error ? (
+          <div className="error-state">
+            <p>{error}</p>
+            <button onClick={() => window.location.reload()} className="btn-secondary">Retry</button>
+          </div>
+        ) : (
+          <section className="park-explorer">
           <div className="search-bar-container">
             <div className="search-bar glass-morphism">
               <RiSearchLine className="search-icon" />
@@ -113,7 +116,8 @@ const Home = () => {
               )}
             </div>
           </div>
-        </section>
+          </section>
+        )}
       </main>
     </div>
   );

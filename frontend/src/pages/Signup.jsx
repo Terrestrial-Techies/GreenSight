@@ -8,14 +8,30 @@ const Signup = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Simulate signup
-    login({ name, email });
-    navigate('/');
+    setError('');
+    setLoading(true);
+
+    try {
+      const { authService } = await import('../services/api');
+      const data = await authService.register(email, password);
+      // Supabase signUp returns user data. For immediate login, we might need another step or just tell user to login.
+      // But typically it returns a session if configured.
+      if (data.user) {
+        // Redirect to login or auto-login if session exists
+        navigate('/login', { state: { message: 'Account created! Please login.' } });
+      }
+    } catch (err) {
+      setError(err.response?.data?.error || 'Signup failed. Email might already be in use.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -27,6 +43,8 @@ const Signup = () => {
         </Link>
         <h2>Join GreenSight</h2>
         <p className="auth-subtitle">Discover and verify green spaces across Nigeria.</p>
+        
+        {error && <div className="auth-error-message">{error}</div>}
         
         <form onSubmit={handleSubmit}>
           <div className="input-group">
@@ -62,7 +80,9 @@ const Signup = () => {
             />
           </div>
 
-          <button type="submit" className="btn-primary auth-submit">Create Account</button>
+          <button type="submit" className="btn-primary auth-submit" disabled={loading}>
+            {loading ? "Creating Account..." : "Create Account"}
+          </button>
         </form>
 
         <p className="auth-footer">
