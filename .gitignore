@@ -33,6 +33,14 @@ Thumbs.db
 
 # Build / output
 build/
+dist/
+dist-ssr/
+.vite/
 
 # Coverage reports
 coverage/
+
+# Caches
+.turbo/
+.vercel/
+.next/
