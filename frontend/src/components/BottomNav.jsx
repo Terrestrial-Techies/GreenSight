@@ -1,5 +1,5 @@
 import React from 'react';
-import { RiMapPinLine, RiMessage2Line, RiBuilding4Line, RiBookmarkLine } from 'react-icons/ri';
+import { RiMapPinLine, RiNotification3Line, RiMessage2Line, RiBuilding4Line, RiBookmarkLine } from 'react-icons/ri';
 
 const BottomNav = ({ activeTab, onTabChange }) => {
   const tabs = [
@@ -7,6 +7,8 @@ const BottomNav = ({ activeTab, onTabChange }) => {
     { id: 'reviews', icon: RiMessage2Line, label: 'Reviews' },
     { id: 'park', icon: RiBuilding4Line, label: 'Park' },
     { id: 'saved', icon: RiBookmarkLine, label: 'Saved' },
+    { id: 'notifications', icon: RiNotification3Line, label: 'Notifications' },
+    { id: 'support', icon: RiNotification3Line, label: 'Support' },
   ];
 
   return (
@@ -22,7 +24,7 @@ const BottomNav = ({ activeTab, onTabChange }) => {
           >
             <Icon size={24} />
             <span className="text-[12px] font-medium">{tab.label}</span>
-            {isActive && <div className="absolute -bottom-1 w-6 h-[2px] bg-primary rounded-full transition-all" />}
+            {isActive && <div className="absolute -bottom-1 w-6 h-0.5 bg-primary rounded-full transition-all" />}
           </button>
         );
       })}

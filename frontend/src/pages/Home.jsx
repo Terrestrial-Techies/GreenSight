@@ -4,6 +4,7 @@ import SearchBar from '../components/SearchBar';
 import MapView from '../components/MapView';
 import NearYou from '../components/NearYou';
 import BottomNav from '../components/BottomNav';
+import Notifications from '../components/notifications'; 
 import { parkService } from '../services/api';
 
 const Home = () => {
@@ -72,29 +73,38 @@ const Home = () => {
       <Header />
       
       <main className="content-scroll">
-        <SearchBar value={searchTerm} onChange={setSearchTerm} />
+        {/* We keep your SearchBar logic but only show it when on 'explore' */}
+        {activeTab === 'explore' && (
+          <SearchBar value={searchTerm} onChange={setSearchTerm} />
+        )}
         
-        <div className="animate-[fadeIn_0.4s_ease-out_forwards]">
-          <MapView 
-            parks={filteredParks} 
-            selectedPark={selectedPark} 
-            onMarkerClick={setSelectedPark} 
-          />
+        {/* Conditional Logic: Swap content based on activeTab */}
+        {activeTab === 'notifications' ? (
+          <Notifications />
+        ) : (
+          <div className="animate-[fadeIn_0.4s_ease-out_forwards]">
+            <MapView 
+              parks={filteredParks} 
+              selectedPark={selectedPark} 
+              onMarkerClick={setSelectedPark} 
+            />
 
-          <div className="px-4 pb-4 mt-6">
-            <button className="btn-primary" onClick={handleReportCondition}>
-              Report centre condition
-            </button>
+            <div className="px-4 pb-4 mt-6">
+              <button className="btn-primary" onClick={handleReportCondition}>
+                Report centre condition
+              </button>
+            </div>
+
+            {loading ? (
+              <div className="p-4 text-center text-neutral-400 text-sm">Loading near you...</div>
+            ) : (
+              <NearYou parks={filteredParks} onParkClick={setSelectedPark} />
+            )}
           </div>
-
-          {loading ? (
-            <div className="p-4 text-center text-neutral-400 text-sm">Loading near you...</div>
-          ) : (
-            <NearYou parks={filteredParks} onParkClick={setSelectedPark} />
-          )}
-        </div>
+        )}
       </main>
 
+      {/* BottomNav is always visible */}
       <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
 
       <style dangerouslySetInnerHTML={{ __html: `
@@ -108,5 +118,3 @@ const Home = () => {
 };
 
 export default Home;
-
-
