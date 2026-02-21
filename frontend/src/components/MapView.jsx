@@ -1,59 +1,239 @@
-import React, { useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import React, { useEffect, useState } from 'react';
+import { MapContainer, TileLayer, Marker, useMap, Polyline } from 'react-leaflet';
 import L from 'leaflet';
+import { RiChat3Line, RiStarFill, RiDirectionLine } from 'react-icons/ri';
 import 'leaflet/dist/leaflet.css';
 
-// Fix for default marker icons in Leaflet with React
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+// Custom SVG Marker with Rating Label
+const createIcon = (color, rating, name) => {
+  return L.divIcon({
+    className: 'custom-pin-container',
+    html: `
+      <div style="position: relative; display: flex; flex-direction: column; align-items: center;">
+        <div style="
+          background: white; 
+          padding: 4px 8px; 
+          border-radius: 20px; 
+          box-shadow: 0 4px 12px rgba(0,0,0,0.15); 
+          border: 1px solid rgba(0,0,0,0.05);
+          display: flex; 
+          align-items: center; 
+          gap: 4px;
+          margin-bottom: 6px;
+          white-space: nowrap;
+          animation: slideUp 0.3s ease-out;
+        ">
+          <span style="color: #F99D1B; font-weight: 800; font-size: 11px;">★</span>
+          <span style="font-weight: 800; font-size: 11px; color: #111418;">${rating || '4.8'}</span>
+          <div style="width: 1px; height: 10px; background: #EDF0F5;"></div>
+          <span style="font-weight: 600; font-size: 11px; color: #36404E;">${name || 'Place'}</span>
+        </div>
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0px 4px 6px rgba(0,0,0,0.3));">
+          <path d="M12 21.35C11.8 21.35 11.6 21.3 11.4 21.2C7.3 19.3 4 14.8 4 9.5C4 5.1 7.6 1.5 12 1.5C16.4 1.5 20 5.1 20 9.5C20 14.8 16.7 19.3 12.6 21.2C12.4 21.3 12.2 21.35 12 21.35Z" fill="${color}" stroke="white" stroke-width="2"/>
+          <circle cx="12" cy="9.5" r="4" fill="white"/>
+        </svg>
+      </div>`,
+    iconSize: [120, 80],
+    iconAnchor: [60, 75]
+  });
+};
+
+const UserIcon = L.divIcon({
+  className: 'user-pin',
+  html: `<div style="width: 14px; height: 14px; background: #1792FF; border: 3px solid white; border-radius: 50%; box-shadow: 0 0 10px rgba(23,146,255,0.6);"></div>`,
+  iconSize: [20, 20],
+  iconAnchor: [10, 10]
 });
 
-// Component to handle map center changes
-const ChangeView = ({ center, zoom }) => {
+const ChangeView = ({ center, zoom, bounds }) => {
   const map = useMap();
-  map.setView(center, zoom);
+  useEffect(() => {
+    if (bounds) {
+      map.fitBounds(bounds, { padding: [50, 50], duration: 1.5 });
+    } else if (center && center[0] && center[1]) {
+      map.flyTo(center, zoom, {
+        duration: 1.8,
+        easeLinearity: 0.1
+      });
+    }
+  }, [center, zoom, bounds, map]);
   return null;
 };
 
-const MapView = ({ parks, selectedPark, onMarkerClick }) => {
-  const lagosCenter = [6.458985, 3.426131]; // Lagos Center
+const MapView = ({ parks = [], selectedPark, onMarkerClick }) => {
+  const lagosCenter = [6.458985, 3.426131];
+  const userLoc = [6.4441, 3.3901]; // Mock user location in Lagos
   
-  return (
-    <MapContainer 
-      center={selectedPark ? [selectedPark.lat, selectedPark.lng] : lagosCenter} 
-      zoom={12} 
-      style={{ height: '100%', width: '100%' }}
-    >
-      <TileLayer
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-      />
-      
-      {selectedPark && (
-        <ChangeView center={[selectedPark.lat, selectedPark.lng]} zoom={14} />
-      )}
+  const [route, setRoute] = useState(null);
+  const [showDirections, setShowDirections] = useState(false);
+  
+  // Decide which park to show on the map (selected or first available)
+  const displayPark = selectedPark || (parks.length > 0 ? parks[0] : null);
 
-      {parks.map(park => (
-        <Marker 
-          key={park.id} 
-          position={[park.lat, park.lng]}
-          eventHandlers={{
-            click: () => onMarkerClick(park),
-          }}
+  // Fetch route when showDirections is toggled
+  useEffect(() => {
+    if (showDirections && displayPark) {
+      const fetchRoute = async () => {
+        try {
+          // OSRM expects [lon, lat]
+          const url = `https://router.project-osrm.org/route/v1/driving/${userLoc[1]},${userLoc[0]};${displayPark.lng},${displayPark.lat}?overview=full&geometries=geojson`;
+          const res = await fetch(url);
+          const data = await res.json();
+          if (data.routes && data.routes[0]) {
+            const coords = data.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
+            setRoute(coords);
+          }
+        } catch (err) {
+          console.error("Routing error:", err);
+        }
+      };
+      fetchRoute();
+    } else {
+      setRoute(null);
+    }
+  }, [showDirections, displayPark]);
+
+  const getConditionColor = (park) => {
+    if (!park) return '#07B60A'; 
+    const condition = park.condition?.toLowerCase() || 'good';
+    if (condition === 'bad') return '#FF000C';
+    if (condition === 'average') return '#F99D1B';
+    return '#07B60A';
+  };
+
+  const markerColor = getConditionColor(displayPark);
+
+  return (
+    <div className="px-4">
+      <div className="w-full h-[400px] bg-neutral-100 rounded-[32px] overflow-hidden relative shadow-sm border border-black/5">
+        <MapContainer 
+          center={displayPark ? [displayPark.lat, displayPark.lng] : lagosCenter} 
+          zoom={14} 
+          className="w-full h-full z-0 font-body"
+          zoomControl={false}
+          attributionControl={false}
         >
-          <Popup>
-            <div className="map-popup">
-              <strong>{park.name}</strong>
-              <p>{park.location}</p>
+          <TileLayer
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          />
+          
+          <ChangeView 
+            center={displayPark ? [displayPark.lat, displayPark.lng] : null} 
+            zoom={showDirections ? 13 : 18}
+            bounds={route ? L.latLngBounds([userLoc, [displayPark.lat, displayPark.lng]]) : null}
+          />
+
+          <Marker position={userLoc} icon={UserIcon} />
+
+          {displayPark && (
+            <Marker 
+              key={displayPark.id}
+              position={[displayPark.lat, displayPark.lng]}
+              icon={createIcon(markerColor, '4.8', displayPark.name)}
+              eventHandlers={{
+                click: () => onMarkerClick && onMarkerClick(displayPark)
+              }}
+            />
+          )}
+
+          {route && (
+            <Polyline 
+              positions={route} 
+              pathOptions={{ 
+                color: '#1792FF', 
+                weight: 5, 
+                opacity: 0.8,
+                lineJoin: 'round',
+                dashArray: '1, 10'
+              }} 
+            />
+          )}
+        </MapContainer>
+
+        {/* Floating Detail Card - Google Maps Style */}
+        {displayPark && (
+          <div className="absolute bottom-4 left-4 right-4 z-[1000] animate-slide-up">
+            <div className="bg-white rounded-2xl p-3 shadow-xl flex gap-3 border border-black/5 backdrop-blur-md bg-white/95">
+              <div className="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0 bg-neutral-50">
+                <img 
+                  src={displayPark.image || `https://images.unsplash.com/photo-1585829365291-1762f59ed290?auto=format&fit=crop&q=80&w=200`} 
+                  alt={displayPark.name} 
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <div className="flex-1 min-w-0 flex flex-col justify-center">
+                <div className="flex items-center justify-between mb-0.5">
+                  <h3 className="font-bold text-neutral-900 truncate text-base text-xs">{displayPark.name}</h3>
+                  <div className="flex items-center gap-1 bg-accent/10 px-1.5 py-0.5 rounded-md">
+                    <RiStarFill className="text-accent text-[10px]" />
+                    <span className="text-[10px] font-black text-accent">4.8</span>
+                  </div>
+                </div>
+                <p className="text-[11px] text-neutral-400 truncate mb-1.5">Nearby Green Space • Lagos</p>
+                <div className="flex items-center gap-2 mt-1">
+                  <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${
+                    displayPark.condition?.toLowerCase() === 'bad' ? 'bg-error/10 text-error' :
+                    displayPark.condition?.toLowerCase() === 'average' ? 'bg-warning/10 text-warning' :
+                    'bg-primary/10 text-primary'
+                  }`}>
+                    {displayPark.condition || 'Good'}
+                  </span>
+                  
+                  <button 
+                    onClick={() => setShowDirections(!showDirections)}
+                    className={`ml-auto text-[11px] font-bold px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-all shadow-sm ${
+                      showDirections 
+                      ? 'bg-neutral-900 text-white' 
+                      : 'bg-primary text-white hover:bg-primary/90'
+                    }`}
+                  >
+                    <RiDirectionLine size={14} />
+                    {showDirections ? 'Close Path' : 'Directions'}
+                  </button>
+                </div>
+              </div>
             </div>
-          </Popup>
-        </Marker>
-      ))}
-    </MapContainer>
+          </div>
+        )}
+
+        {/* Floating Chat/Help Button */}
+        {!displayPark && (
+          <button className="absolute bottom-4 right-4 w-12 h-12 bg-white text-neutral-900 rounded-full border border-black/5 flex items-center justify-center z-[1000] shadow-md active:scale-95 transition-transform">
+            <RiChat3Line size={24} />
+          </button>
+        )}
+      </div>
+
+      <style dangerouslySetInnerHTML={{ __html: `
+        @keyframes markerDrop {
+          from { transform: translateY(-30px); opacity: 0; }
+          to { transform: translateY(0); opacity: 1; }
+        }
+        @keyframes slideUp {
+          from { transform: translateY(100%); opacity: 0; }
+          to { transform: translateY(0); opacity: 1; }
+        }
+        .animate-slide-up {
+          animation: slideUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+        .custom-pin-container {
+          filter: none !important;
+        }
+        .leaflet-container {
+          background: #f8f9fa !important;
+        }
+        .user-pin {
+          animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+          0% { transform: scale(1); opacity: 1; }
+          50% { transform: scale(1.3); opacity: 0.7; }
+          100% { transform: scale(1); opacity: 1; }
+        }
+      `}} />
+    </div>
   );
 };
 
 export default MapView;
+
