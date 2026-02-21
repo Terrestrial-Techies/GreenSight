@@ -6,6 +6,7 @@ import NearYou from '../components/NearYou';
 import BottomNav from '../components/BottomNav';
 import Notifications from '../components/notifications'; 
 import Support from './Support'; 
+import Community from './Community'; // 1. Import the new Community component
 import { parkService } from '../services/api';
 
 const Home = () => {
@@ -75,6 +76,8 @@ const Home = () => {
         return <Notifications />;
       case 'support':
         return <Support />;
+      case 'community': // 2. Add case for community
+        return <Community />;
       case 'explore':
       default:
         return (
