@@ -4,6 +4,7 @@ import L from 'leaflet';
 import { RiChat3Line, RiStarFill, RiDirectionLine } from 'react-icons/ri';
 import 'leaflet/dist/leaflet.css';
 import SnapshotPanel from './SnapshotPanel';
+import { parkService } from '../services/api';
 
 // Custom SVG Marker with Rating Label
 const createIcon = (color, rating, name) => {
@@ -67,6 +68,20 @@ const MapView = ({ parks = [], selectedPark, onMarkerClick }) => {
   const [route, setRoute] = useState(null);
   const [showDirections, setShowDirections] = useState(false);
   const [showSnapshot, setShowSnapshot] = useState(false);
+  const [enrichedPark, setEnrichedPark] = useState(null);
+  const [loadingEnrich, setLoadingEnrich] = useState(false);
+
+  const handleOpenDetails = async (park) => {
+    setEnrichedPark(park); // Show modal immediately with DB data
+    setShowSnapshot(true);
+    setLoadingEnrich(true);
+    // Fetch Gemini-enriched version in background
+    const geminiData = await parkService.enrichPark(park.id);
+    if (geminiData) {
+      setEnrichedPark({ ...park, ...geminiData }); // DB park fields + Gemini extras
+    }
+    setLoadingEnrich(false);
+  };
 
   // Get real user location and watch for changes
   useEffect(() => {
@@ -203,7 +218,7 @@ const MapView = ({ parks = [], selectedPark, onMarkerClick }) => {
                   
                   <div className="ml-auto flex gap-2">
                     <button 
-                      onClick={() => setShowSnapshot(true)}
+                      onClick={() => handleOpenDetails(displayPark)}
                       className="bg-neutral-100 text-neutral-900 text-[11px] font-bold px-3 py-1.5 rounded-lg border border-black/5 hover:bg-neutral-200 transition-colors"
                     >
                       Details
@@ -227,7 +242,7 @@ const MapView = ({ parks = [], selectedPark, onMarkerClick }) => {
         )}
 
         {/* Snapshot Modal Overlay */}
-        {showSnapshot && displayPark && (
+        {showSnapshot && enrichedPark && (
           <div 
             className="fixed inset-0 z-[2000] flex items-center justify-center p-4 animate-fade-in"
             onClick={(e) => e.target === e.currentTarget && setShowSnapshot(false)}
@@ -238,8 +253,9 @@ const MapView = ({ parks = [], selectedPark, onMarkerClick }) => {
             {/* Modal Card */}
             <div className="relative w-full max-w-[380px] h-[80vh] bg-white rounded-[32px] shadow-2xl overflow-hidden animate-modal-pop">
               <SnapshotPanel 
-                park={displayPark} 
-                onClose={() => setShowSnapshot(false)} 
+                park={enrichedPark} 
+                isLoading={loadingEnrich}
+                onClose={() => { setShowSnapshot(false); setEnrichedPark(null); }} 
               />
             </div>
           </div>
