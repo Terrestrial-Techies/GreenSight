@@ -5,6 +5,7 @@ import MapView from '../components/MapView';
 import NearYou from '../components/NearYou';
 import BottomNav from '../components/BottomNav';
 import Notifications from '../components/notifications'; 
+import Support from './Support'; 
 import { parkService } from '../services/api';
 
 const Home = () => {
@@ -49,20 +50,15 @@ const Home = () => {
     p.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  return (
-    <div className="app-container overflow-hidden">
-      <Header />
-      
-      <main className="content-scroll">
-        {/* We keep your SearchBar logic but only show it when on 'explore' */}
-        {activeTab === 'explore' && (
-          <SearchBar value={searchTerm} onChange={setSearchTerm} />
-        )}
-        
-        {/* Conditional Logic: Swap content based on activeTab */}
-        {activeTab === 'notifications' ? (
-          <Notifications />
-        ) : (
+  const renderContent = () => {
+    switch (activeTab) {
+      case 'notifications':
+        return <Notifications />;
+      case 'support':
+        return <Support />;
+      case 'explore':
+      default:
+        return (
           <div className="animate-[fadeIn_0.4s_ease-out_forwards]">
             <MapView 
               parks={filteredParks} 
@@ -82,10 +78,22 @@ const Home = () => {
               <NearYou parks={filteredParks} onParkClick={setSelectedPark} />
             )}
           </div>
+        );
+    }
+  };
+
+  return (
+    <div className="app-container overflow-hidden">
+      <Header />
+      
+      <main className="content-scroll">
+        {activeTab === 'explore' && (
+          <SearchBar value={searchTerm} onChange={setSearchTerm} />
         )}
+
+        {renderContent()}
       </main>
 
-      {/* BottomNav is always visible */}
       <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
 
       <style dangerouslySetInnerHTML={{ __html: `
