@@ -1,0 +1,42 @@
+.near-you {
+  padding: 16px 0;
+}
+
+.section-title {
+  padding: 0 16px;
+  font-size: 18px;
+  margin-bottom: 12px;
+  color: #1a1a1a;
+}
+
+.horizontal-scroll {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding: 4px 16px 16px;
+  scrollbar-width: none;
+}
+
+.horizontal-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.park-preview-card {
+  flex: 0 0 140px;
+  height: 180px;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  background-color: var(--surface);
+}
+
+.park-preview-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s;
+}
+
+.park-preview-card:active .park-preview-image {
+  transform: scale(1.05);
+}

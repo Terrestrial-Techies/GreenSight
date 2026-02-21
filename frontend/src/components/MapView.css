@@ -1,0 +1,50 @@
+.map-view-container {
+  padding: 16px;
+}
+
+.map-box {
+  width: 100%;
+  height: 320px;
+  background-color: #000;
+  border-radius: 20px;
+  overflow: hidden;
+  position: relative;
+  box-shadow: var(--shadow);
+}
+
+.chat-fab {
+  position: absolute;
+  bottom: 16px;
+  right: 16px;
+  width: 56px;
+  height: 56px;
+  background-color: #e2e8f0;
+  color: #4a5568;
+  border-radius: 50%;
+  border: 4px solid white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+/* Custom Pin Styles */
+.custom-pin {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.pin {
+  width: 24px;
+  height: 24px;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  border: 2px solid white;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.leaflet-container {
+  background: #000 !important;
+}
