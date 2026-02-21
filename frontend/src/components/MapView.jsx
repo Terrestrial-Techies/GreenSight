@@ -62,7 +62,7 @@ const ChangeView = ({ center, zoom, bounds }) => {
   return null;
 };
 
-const MapView = ({ parks = [], selectedPark, onMarkerClick }) => {
+const MapView = ({ parks = [], selectedPark, onMarkerClick, onChatClick }) => {
   const lagosCenter = [6.458985, 3.426131];
   const [userLoc, setUserLoc] = useState(lagosCenter);
   const [route, setRoute] = useState(null);
@@ -97,8 +97,8 @@ const MapView = ({ parks = [], selectedPark, onMarkerClick }) => {
     }
   }, []);
   
-  // Decide which park to show on the map (selected or first available)
-  const displayPark = selectedPark || (parks.length > 0 ? parks[0] : null);
+  // Decide which park to focus on the map (selected or user center)
+  const displayPark = selectedPark;
 
   // Fetch route when showDirections is toggled or user position changes
   useEffect(() => {
@@ -130,8 +130,6 @@ const MapView = ({ parks = [], selectedPark, onMarkerClick }) => {
     return '#07B60A';
   };
 
-  const markerColor = getConditionColor(displayPark);
-
   return (
     <div className="px-4">
       <div className="w-full h-[400px] bg-neutral-100 rounded-[32px] overflow-hidden relative shadow-sm border border-black/5">
@@ -154,16 +152,17 @@ const MapView = ({ parks = [], selectedPark, onMarkerClick }) => {
 
           <Marker position={userLoc} icon={UserIcon} />
 
-          {displayPark && (
+          {/* Render ALL Parks with their status colors */}
+          {parks.map((park) => (
             <Marker 
-              key={displayPark.id}
-              position={[displayPark.lat, displayPark.lng]}
-              icon={createIcon(markerColor, '4.8', displayPark.name)}
+              key={park.id}
+              position={[park.lat, park.lng]}
+              icon={createIcon(getConditionColor(park), park.rating || '4.8', park.name)}
               eventHandlers={{
-                click: () => onMarkerClick && onMarkerClick(displayPark)
+                click: () => onMarkerClick && onMarkerClick(park)
               }}
             />
-          )}
+          ))}
 
           {route && (
             <Polyline 
@@ -244,14 +243,17 @@ const MapView = ({ parks = [], selectedPark, onMarkerClick }) => {
         {/* Snapshot Modal Overlay */}
         {showSnapshot && enrichedPark && (
           <div 
-            className="fixed inset-0 z-[2000] flex items-center justify-center p-4 animate-fade-in"
+            className="fixed inset-0 z-[2000] flex items-end sm:items-center justify-center animate-fade-in"
             onClick={(e) => e.target === e.currentTarget && setShowSnapshot(false)}
           >
             {/* Blurred Backdrop */}
-            <div className="absolute inset-0 bg-black/40 backdrop-blur-md"></div>
+            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
             
-            {/* Modal Card */}
-            <div className="relative w-full max-w-[380px] h-[80vh] bg-white rounded-[32px] shadow-2xl overflow-hidden animate-modal-pop">
+            {/* Modal Card - Mobile Bottom Sheet Style */}
+            <div className="relative w-full sm:max-w-[420px] h-[85vh] sm:h-[80vh] bg-white rounded-t-[32px] sm:rounded-[32px] shadow-2xl overflow-hidden animate-slide-up sm:animate-modal-pop">
+              {/* Mobile Handle */}
+              <div className="w-12 h-1.5 bg-neutral-200 rounded-full mx-auto mt-3 mb-1 sm:hidden"></div>
+              
               <SnapshotPanel 
                 park={enrichedPark} 
                 isLoading={loadingEnrich}
@@ -262,11 +264,13 @@ const MapView = ({ parks = [], selectedPark, onMarkerClick }) => {
         )}
 
         {/* Floating Chat/Help Button */}
-        {!displayPark && (
-          <button className="absolute bottom-4 right-4 w-12 h-12 bg-white text-neutral-900 rounded-full border border-black/5 flex items-center justify-center z-[1000] shadow-md active:scale-95 transition-transform">
-            <RiChat3Line size={24} />
-          </button>
-        )}
+        <button 
+          onClick={onChatClick}
+          className="absolute bottom-20 right-4 w-12 h-12 bg-white text-primary rounded-full border border-black/5 flex items-center justify-center z-[1000] shadow-lg active:scale-95 transition-all hover:bg-primary hover:text-white group"
+        >
+          <RiChat3Line size={24} className="group-hover:animate-bounce" />
+          <div className="absolute -top-1 -right-1 w-3 h-3 bg-error rounded-full border-2 border-white"></div>
+        </button>
       </div>
 
       <style dangerouslySetInnerHTML={{ __html: `
