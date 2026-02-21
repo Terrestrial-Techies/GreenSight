@@ -59,21 +59,16 @@ const SnapshotPanel = ({ park, onClose }) => {
 =======
 import { RiCloseLine, RiCheckLine, RiLeafLine, RiShieldCheckLine, RiTimeLine } from 'react-icons/ri';
 
-const SnapshotPanel = ({ park, onClose }) => {
+const SnapshotPanel = ({ park, onClose, isLoading = false }) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
   if (!park) return null;
 
-  const address = park.address || 'NO 15, Gbadamosi Layout, Gbagada, Lagos';
-  const aiSummary = park.ai_summary || 'A peaceful retreat with great amenities and well-maintained gardens. Perfect for morning jogs.';
-  const features = park.key_features || ['Garden', 'Quiet Zone', 'Pet-Friendly'];
-  const cleanliness = park.cleanliness || 'Fair';
-  const facilities = park.facilities || [
-    { name: 'Convenience', available: true },
-    { name: 'Convenience Store', available: false },
-    { name: 'Chairs', available: true },
-    { name: 'Parking Lot', available: true },
-  ];
+  const address = park.address || 'Lagos, Nigeria';
+  const aiSummary = park.ai_summary || null; // Will be filled by Gemini
+  const features = park.key_features || null; // Will be filled by Gemini
+  const cleanliness = park.cleanliness || null; // Will be filled by Gemini
+  const facilities = park.facilities || null; // Will be filled by Gemini
   const gallery = park.gallery || [
     'https://images.unsplash.com/photo-1519331379826-f10be5486c6f?auto=format&fit=crop&q=80&w=200',
     'https://images.unsplash.com/photo-1585829365291-1762f59ed290?auto=format&fit=crop&q=80&w=200',
@@ -81,9 +76,10 @@ const SnapshotPanel = ({ park, onClose }) => {
     'https://images.unsplash.com/photo-1588711447273-047b749d01f2?auto=format&fit=crop&q=80&w=200',
   ];
 
-  const conditionColor =
-    park.condition?.toLowerCase() === 'bad' ? '#FF000C' :
-    park.condition?.toLowerCase() === 'average' ? '#F99D1B' : '#07B60A';
+  // ✅ STATUS: Mapped directly from real park.condition in the database
+  const conditionRaw = park.condition?.toLowerCase();
+  const conditionColor = conditionRaw === 'bad' ? '#FF000C' : conditionRaw === 'average' ? '#F99D1B' : '#07B60A';
+  const statusLabel = conditionRaw === 'bad' ? 'Poor' : conditionRaw === 'average' ? 'Average' : conditionRaw === 'good' ? 'Excellent' : (park.condition || 'Excellent');
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', fontFamily: 'Nunito, sans-serif', color: '#111418' }}>
@@ -142,6 +138,14 @@ const SnapshotPanel = ({ park, onClose }) => {
       {/* ── DIVIDER ── */}
       <div style={{ height: 1, background: '#F2F4F7', margin: '0 20px' }} />
 
+      {/* ── GEMINI LOADING BANNER ── */}
+      {isLoading && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#FFFBF2', padding: '7px 20px', borderBottom: '1px solid #F99D1B22' }}>
+          <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#F99D1B', animation: 'pulse 1.5s infinite' }} />
+          <span style={{ fontSize: 11, color: '#F99D1B', fontWeight: 700 }}>🤖 Gemini is enriching park data...</span>
+        </div>
+      )}
+
       {!isExpanded ? (
         /* ── STAGE 1: SUMMARY ── */
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '16px 20px 20px', gap: 16 }}>
@@ -160,7 +164,7 @@ const SnapshotPanel = ({ park, onClose }) => {
             <div>
               <div style={{ fontSize: 11, color: '#667085', fontWeight: 600 }}>Status</div>
               <div style={{ fontSize: 18, fontWeight: 800, color: conditionColor }}>
-                {park.status_level || 'Excellent'}
+                {statusLabel}
               </div>
             </div>
           </div>
@@ -168,15 +172,15 @@ const SnapshotPanel = ({ park, onClose }) => {
           {/* Key Features */}
           <div>
             <div style={{ fontSize: 13, fontWeight: 800, marginBottom: 8 }}>Key Features</div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-              {features.map((f, i) => (
-                <span key={i} style={{
-                  background: '#F5FFF5', color: '#07B60A', fontSize: 11,
-                  fontWeight: 700, padding: '4px 10px', borderRadius: 99,
-                  border: '1px solid #07B60A22'
-                }}>{f}</span>
-              ))}
-            </div>
+            {features ? (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                {features.map((f, i) => (
+                  <span key={i} style={{ background: '#F5FFF5', color: '#07B60A', fontSize: 11, fontWeight: 700, padding: '4px 10px', borderRadius: 99, border: '1px solid #07B60A22' }}>{f}</span>
+                ))}
+              </div>
+            ) : (
+              <div style={{ fontSize: 12, color: '#98A2B3', fontStyle: 'italic' }}>🤖 Gemini will generate this from park data</div>
+            )}
           </div>
 
           {/* AI Summary */}
@@ -185,7 +189,11 @@ const SnapshotPanel = ({ park, onClose }) => {
               <RiLeafLine size={12} color="#F99D1B" />
               <span style={{ fontSize: 9, fontWeight: 900, color: '#F99D1B', textTransform: 'uppercase', letterSpacing: '0.08em' }}>AI Review Summary</span>
             </div>
-            <p style={{ margin: 0, fontSize: 11.5, color: '#4A5568', lineHeight: 1.6, fontStyle: 'italic' }}>"{aiSummary}"</p>
+            {aiSummary ? (
+              <p style={{ margin: 0, fontSize: 11.5, color: '#4A5568', lineHeight: 1.6, fontStyle: 'italic' }}>"{aiSummary}"</p>
+            ) : (
+              <p style={{ margin: 0, fontSize: 11.5, color: '#B0B7C3', lineHeight: 1.6, fontStyle: 'italic' }}>🤖 AI summary will be generated by Gemini once integrated</p>
+            )}
           </div>
 
           {/* View Full Snapshot Button */}
