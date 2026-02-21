@@ -3,6 +3,7 @@ import { MapContainer, TileLayer, Marker, useMap, Polyline } from 'react-leaflet
 import L from 'leaflet';
 import { RiChat3Line, RiStarFill, RiDirectionLine } from 'react-icons/ri';
 import 'leaflet/dist/leaflet.css';
+import SnapshotPanel from './SnapshotPanel';
 
 // Custom SVG Marker with Rating Label
 const createIcon = (color, rating, name) => {
@@ -62,20 +63,33 @@ const ChangeView = ({ center, zoom, bounds }) => {
 
 const MapView = ({ parks = [], selectedPark, onMarkerClick }) => {
   const lagosCenter = [6.458985, 3.426131];
-  const userLoc = [6.4441, 3.3901]; // Mock user location in Lagos
-  
+  const [userLoc, setUserLoc] = useState(lagosCenter);
   const [route, setRoute] = useState(null);
   const [showDirections, setShowDirections] = useState(false);
+  const [showSnapshot, setShowSnapshot] = useState(false);
+
+  // Get real user location and watch for changes
+  useEffect(() => {
+    if ("geolocation" in navigator) {
+      const watchId = navigator.geolocation.watchPosition(
+        (position) => {
+          setUserLoc([position.coords.latitude, position.coords.longitude]);
+        },
+        (error) => console.error("Error watching location:", error),
+        { enableHighAccuracy: true }
+      );
+      return () => navigator.geolocation.clearWatch(watchId);
+    }
+  }, []);
   
   // Decide which park to show on the map (selected or first available)
   const displayPark = selectedPark || (parks.length > 0 ? parks[0] : null);
 
-  // Fetch route when showDirections is toggled
+  // Fetch route when showDirections is toggled or user position changes
   useEffect(() => {
-    if (showDirections && displayPark) {
+    if (showDirections && displayPark && userLoc) {
       const fetchRoute = async () => {
         try {
-          // OSRM expects [lon, lat]
           const url = `https://router.project-osrm.org/route/v1/driving/${userLoc[1]},${userLoc[0]};${displayPark.lng},${displayPark.lat}?overview=full&geometries=geojson`;
           const res = await fetch(url);
           const data = await res.json();
@@ -91,7 +105,7 @@ const MapView = ({ parks = [], selectedPark, onMarkerClick }) => {
     } else {
       setRoute(null);
     }
-  }, [showDirections, displayPark]);
+  }, [showDirections, displayPark, userLoc]);
 
   const getConditionColor = (park) => {
     if (!park) return '#07B60A'; 
@@ -169,8 +183,16 @@ const MapView = ({ parks = [], selectedPark, onMarkerClick }) => {
                     <span className="text-[10px] font-black text-accent">4.8</span>
                   </div>
                 </div>
-                <p className="text-[11px] text-neutral-400 truncate mb-1.5">Nearby Green Space • Lagos</p>
-                <div className="flex items-center gap-2 mt-1">
+                <p className="text-[11px] text-neutral-400 truncate mb-1">Nearby Green Space • Lagos</p>
+                
+                {/* AI Review Summary */}
+                <div className="bg-neutral-50 px-2 py-1.5 rounded-lg mb-2 border border-black/[0.03]">
+                  <p className="text-[10px] text-neutral-600 line-clamp-2 italic">
+                    "{displayPark.ai_summary || "AI Summary: A peaceful retreat with great amenities and well-maintained gardens."}"
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2">
                   <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${
                     displayPark.condition?.toLowerCase() === 'bad' ? 'bg-error/10 text-error' :
                     displayPark.condition?.toLowerCase() === 'average' ? 'bg-warning/10 text-warning' :
@@ -179,19 +201,46 @@ const MapView = ({ parks = [], selectedPark, onMarkerClick }) => {
                     {displayPark.condition || 'Good'}
                   </span>
                   
-                  <button 
-                    onClick={() => setShowDirections(!showDirections)}
-                    className={`ml-auto text-[11px] font-bold px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-all shadow-sm ${
-                      showDirections 
-                      ? 'bg-neutral-900 text-white' 
-                      : 'bg-primary text-white hover:bg-primary/90'
-                    }`}
-                  >
-                    <RiDirectionLine size={14} />
-                    {showDirections ? 'Close Path' : 'Directions'}
-                  </button>
+                  <div className="ml-auto flex gap-2">
+                    <button 
+                      onClick={() => setShowSnapshot(true)}
+                      className="bg-neutral-100 text-neutral-900 text-[11px] font-bold px-3 py-1.5 rounded-lg border border-black/5 hover:bg-neutral-200 transition-colors"
+                    >
+                      Details
+                    </button>
+                    <button 
+                      onClick={() => setShowDirections(!showDirections)}
+                      className={`text-[11px] font-bold px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-all shadow-sm ${
+                        showDirections 
+                        ? 'bg-neutral-900 text-white' 
+                        : 'bg-primary text-white hover:bg-primary/90'
+                      }`}
+                    >
+                      <RiDirectionLine size={14} />
+                      {showDirections ? 'Close' : 'Directions'}
+                    </button>
+                  </div>
                 </div>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Snapshot Modal Overlay */}
+        {showSnapshot && displayPark && (
+          <div 
+            className="fixed inset-0 z-[2000] flex items-center justify-center p-4 animate-fade-in"
+            onClick={(e) => e.target === e.currentTarget && setShowSnapshot(false)}
+          >
+            {/* Blurred Backdrop */}
+            <div className="absolute inset-0 bg-black/40 backdrop-blur-md"></div>
+            
+            {/* Modal Card */}
+            <div className="relative w-full max-w-[380px] h-[80vh] bg-white rounded-[32px] shadow-2xl overflow-hidden animate-modal-pop">
+              <SnapshotPanel 
+                park={displayPark} 
+                onClose={() => setShowSnapshot(false)} 
+              />
             </div>
           </div>
         )}
@@ -212,6 +261,20 @@ const MapView = ({ parks = [], selectedPark, onMarkerClick }) => {
         @keyframes slideUp {
           from { transform: translateY(100%); opacity: 0; }
           to { transform: translateY(0); opacity: 1; }
+        }
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        @keyframes modalPop {
+          from { transform: scale(0.9) translateY(20px); opacity: 0; }
+          to { transform: scale(1) translateY(0); opacity: 1; }
+        }
+        .animate-fade-in {
+          animation: fadeIn 0.3s ease-out forwards;
+        }
+        .animate-modal-pop {
+          animation: modalPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
         }
         .animate-slide-up {
           animation: slideUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
