@@ -1,19 +1,27 @@
 import React from 'react';
+<<<<<<< HEAD
 import { RiMapPinLine, RiQuestionAnswerLine, RiGroupLine, RiNotification3Line, RiMessage2Line, RiBuilding4Line, RiBookmarkLine } from 'react-icons/ri';
+=======
+import { RiMapPinLine, RiMessage2Line, RiBuilding4Line, RiNotification3Line } from 'react-icons/ri';
+>>>>>>> 5a86afe (review section)
 
 const BottomNav = ({ activeTab, onTabChange }) => {
   const tabs = [
     { id: 'explore', icon: RiMapPinLine, label: 'Explore' },
     { id: 'reviews', icon: RiMessage2Line, label: 'Reviews' },
     { id: 'park', icon: RiBuilding4Line, label: 'Park' },
+<<<<<<< HEAD
     { id: 'saved', icon: RiBookmarkLine, label: 'Saved' },
     { id: 'notifications', icon: RiNotification3Line, label: 'Notifications' },
     { id: 'support', icon: RiQuestionAnswerLine, label: 'Support' },
     { id: 'community', icon: RiGroupLine, label: 'Community' },
+=======
+    { id: 'notifications', icon: RiNotification3Line, label: 'Notifications' },
+>>>>>>> 5a86afe (review section)
   ];
 
   return (
-    <nav className="absolute bottom-0 left-0 right-0 h-[70px] bg-neutral-50 flex justify-around items-center px-3 border-t border-black/5 z-[100]">
+    <nav className="sticky bottom-0 left-0 right-0 h-[70px] bg-white/95 backdrop-blur-md flex justify-around items-center px-3 border-t border-black/5 z-[100] pb-safe">
       {tabs.map((tab) => {
         const Icon = tab.icon;
         const isActive = activeTab === tab.id;

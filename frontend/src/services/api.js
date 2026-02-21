@@ -98,6 +98,7 @@ export const chatbotService = {
   }
 };
 
+<<<<<<< HEAD
 export const communityService = {
   getAllReviews: async () => {
     const response = await api.get('/community');
@@ -110,4 +111,6 @@ export const communityService = {
   }
 };
 
+=======
+>>>>>>> 5a86afe (review section)
 export default api;
