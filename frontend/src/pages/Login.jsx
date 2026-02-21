@@ -21,11 +21,18 @@ const Login = () => {
     try {
       const { authService } = await import('../services/api');
       const data = await authService.login(email, password);
-      
-      // Save user and session (token is in data.session.access_token)
-      login({ 
-        email: data.session.user.email, 
-        token: data.session.access_token 
+
+      // Normalize Supabase response shape (backend returns `session: data` where
+      // `data` may contain `{ user, session }`). Safely extract user email and token.
+      const sessionWrapper = data.session || {};
+      const userObj = sessionWrapper.user || sessionWrapper.session?.user;
+      const token = sessionWrapper.session?.access_token || sessionWrapper.access_token || null;
+
+      if (!userObj) throw new Error('Missing user information in login response');
+
+      login({
+        email: userObj.email,
+        token,
       });
       
       navigate('/');

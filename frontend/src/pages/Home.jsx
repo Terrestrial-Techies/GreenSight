@@ -17,14 +17,14 @@ const Home = () => {
   // Fallback / Enhancement data (since backend is missing some fields for now)
   const enhanceParkData = (backendParks) => {
     return backendParks.map(park => ({
-      ...park,
-      // Handle both possible naming conventions from Supabase
       lat: park.latitude || park.lat || 6.5244,
       lng: park.longitude || park.lng || 3.3792,
       name: park.name || "Unnamed Park",
-      access: park.access_type || "Public",
+      location: park.location || "Lagos, Nigeria",
+      access: park.access_type || park.access || "Public",
       price: park.price || "Free",
       lastUpdated: "Recently",
+      features: park.features || [],
       description: park.description || `A verified green space in Lagos with a confidence score of ${park.confidence_score || 0}%`
     }));
   };

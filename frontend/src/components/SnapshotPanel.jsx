@@ -16,7 +16,6 @@ const SnapshotPanel = ({ park, onClose }) => {
       navigator.geolocation.getCurrentPosition(
         (position) => {
           const { latitude: userLat, longitude: userLng } = position.coords;
-          
           const directionsUrl = `https://www.google.com/maps/dir/?api=1&origin=${userLat},${userLng}&destination=${park.lat},${park.lng}&travelmode=driving`;
           
           window.open(directionsUrl, '_blank');
@@ -25,7 +24,6 @@ const SnapshotPanel = ({ park, onClose }) => {
         (error) => {
           console.error("Geolocation Error:", error);
           setIsLocating(false);
-
           const fallbackUrl = `https://www.google.com/maps/search/?api=1&query=${park.lat},${park.lng}`;
           window.open(fallbackUrl, '_blank');
           alert("Unable to find your location. Opening the park's location instead.");
@@ -46,6 +44,9 @@ const SnapshotPanel = ({ park, onClose }) => {
       default: return { text: 'Status Unknown', class: 'status-gray' };
     }
   };
+
+  const operationalCount = (park.features || []).filter(f => f.status === 'Operational').length;
+  const totalFeatures = (park.features || []).length;
 
   return (
     <div className="snapshot-panel glass-morphism">
@@ -73,10 +74,11 @@ const SnapshotPanel = ({ park, onClose }) => {
             <span>AI Snapshot Summary</span>
           </div>
           <p>
-            {park.description} Currently, <strong>
-              {(park.features || []).filter(f => f.status === 'Operational').length}/{(park.features || []).length}
-            </strong> tracked infrastructures are operational. 
-            Early mornings in Lagos are typically the quietest times for this space.
+            {park.description} 
+            {totalFeatures > 0 && (
+              <> Currently, <strong>{operationalCount}/{totalFeatures}</strong> tracked infrastructures are operational.</>
+            )}
+            {" "}Early mornings in Lagos are typically the quietest times for this space.
           </p>
         </div>
 
@@ -87,18 +89,22 @@ const SnapshotPanel = ({ park, onClose }) => {
           </div>
           
           <div className="feature-status-list">
-            {(park.features || []).map((feature, idx) => {
-              const status = getStatusLabel(feature.status);
-              return (
-                <div key={idx} className="status-row">
-                  <span className="feature-name">{feature.name}</span>
-                  <div className="status-indicator">
-                    <span className={`status-text ${status.class}`}>{status.text}</span>
-                    <span className={`status-pill ${status.class}`}></span>
+            {park.features && park.features.length > 0 ? (
+              park.features.map((feature, idx) => {
+                const status = getStatusLabel(feature.status);
+                return (
+                  <div key={idx} className="status-row">
+                    <span className="feature-name">{feature.name}</span>
+                    <div className="status-indicator">
+                      <span className={`status-text ${status.class}`}>{status.text}</span>
+                      <span className={`status-pill ${status.class}`}></span>
+                    </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })
+            ) : (
+              <p className="no-features">No feature details available.</p>
+            )}
           </div>
         </div>
 
@@ -128,6 +134,7 @@ const SnapshotPanel = ({ park, onClose }) => {
           onSubmit={(data) => {
             console.log("New User Report for Lagos Green Space:", data);
             alert(`Report logged: ${park.name} is currently flagged as ${data.safety}.`);
+            setShowReportModal(false);
           }}
         />
       )}

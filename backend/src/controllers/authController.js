@@ -15,6 +15,7 @@ const register = async (req, res) => {
       user,
     });
   } catch (error) {
+    console.error('Auth register error:', error);
     res.status(400).json({ error: error.message });
   }
 };
@@ -34,6 +35,7 @@ const login = async (req, res) => {
       session,
     });
   } catch (error) {
+    console.error('Auth login error:', error);
     res.status(400).json({ error: error.message });
   }
 };
