@@ -243,7 +243,7 @@ const Home = () => {
                 <div 
                   key={park.id} 
                   className="bg-white rounded-2xl p-4 shadow-sm hover:shadow-md border border-neutral-100 flex flex-col transition-all cursor-pointer group" 
-                  onClick={() => { setSelectedPark(park); setActiveTab('explore'); }}
+                  onClick={() => { setSelectedPark(park); setActiveTab('explore'); setShowDetails(true); }}
                 >
                   <div className="w-full aspect-[4/3] rounded-xl overflow-hidden mb-4">
                     <img 
@@ -280,9 +280,9 @@ const Home = () => {
                       </div>
                       <button 
                         className="bg-primary/10 text-primary px-3 py-1.5 rounded-lg font-bold text-[10px] hover:bg-primary hover:text-white transition-colors"
-                        onClick={(e) => { e.stopPropagation(); setSelectedPark(park); setActiveTab('explore'); }}
+                        onClick={(e) => { e.stopPropagation(); setSelectedPark(park); setActiveTab('explore'); setShowDetails(true); }}
                       >
-                        Map
+                        Details
                       </button>
                     </div>
                   </div>

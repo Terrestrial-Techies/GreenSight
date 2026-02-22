@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { RiSendPlane2Fill, RiCloseLine, RiRobot2Line, RiUserLine } from 'react-icons/ri';
+import { RiArrowUpLine, RiCloseLine, RiRobot2Line, RiUserLine } from 'react-icons/ri';
 import { chatbotService } from '../services/api';
 import './Chatbot.css';
 
@@ -99,7 +99,7 @@ const Chatbot = ({ onClose, isFullPage = false }) => {
             autoFocus
           />
           <button type="submit" disabled={!input.trim() || isTyping} className="btn-primary">
-            <RiSendPlane2Fill size={20} />
+            <RiArrowUpLine size={24} />
           </button>
         </form>
       </div>

@@ -77,7 +77,7 @@ const Signup = () => {
           
           <div className="form-header">
             <h2>Create Account</h2>
-            <p>Ready to explore? Join Tunde and 500+ others.</p>
+            <p>Ready to explore? Join our community of Lagos urban explorers.</p>
           </div>
 
           {error && <div className="m3-error-banner">{error}</div>}
