@@ -1,7 +1,7 @@
-import { RiMapPinLine, RiTreeLine, RiGroupLine, RiChatVoiceLine } from 'react-icons/ri';
+import { RiMapPinLine, RiTreeLine, RiGroupLine, RiChatVoiceLine, RiUserLine } from 'react-icons/ri';
 import './BottomNav.css';
 
-const BottomNav = ({ activeTab, onTabChange }) => {
+const BottomNav = ({ activeTab, onTabChange, onProfileClick }) => {
   const tabs = [
     { id: 'explore', icon: RiMapPinLine, label: 'Explore' },
     { id: 'park', icon: RiTreeLine, label: 'Parks' },
@@ -27,6 +27,15 @@ const BottomNav = ({ activeTab, onTabChange }) => {
           </button>
         );
       })}
+      <button 
+        className="nav-item"
+        onClick={onProfileClick}
+      >
+        <div className="nav-icon-container">
+           <RiUserLine size={24} />
+        </div>
+        <span className="nav-label">Profile</span>
+      </button>
     </nav>
   );
 };

@@ -26,6 +26,7 @@ const Home = () => {
   });
   const [showProfile, setShowProfile] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
+  const [showPopupChat, setShowPopupChat] = useState(false);
   const { user, logout } = useAuth();
 
   useEffect(() => {
@@ -95,7 +96,7 @@ const Home = () => {
            <div className="w-full h-full relative flex items-center justify-center overflow-hidden">
              {/* High Impact Background Banner */}
              <div className="absolute inset-0 z-0">
-               <img src="https://images.unsplash.com/photo-1596438459194-f275f413d6ff?auto=format&fit=crop&q=80&w=2000" className="w-full h-full object-cover brightness-50" />
+               <img src="https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&q=80&w=2000" className="w-full h-full object-cover brightness-50" />
                <div className="absolute inset-0 bg-gradient-to-t from-primary/80 to-transparent"></div>
              </div>
              
@@ -220,6 +221,16 @@ const Home = () => {
             <p className="text-[11px] text-neutral-500 font-medium uppercase tracking-wider">Top rated urban green spaces</p>
           </div>
           
+          {!user && (
+            <div className="mb-6 bg-primary/5 p-4 rounded-2xl border border-primary/10">
+              <p className="text-xs text-neutral-600 mb-3">Save favorites and get personalized recommendations.</p>
+              <div className="flex gap-2">
+                <Link to="/login" className="flex-1 text-center py-2 bg-white border border-neutral-200 rounded-lg text-xs font-bold hover:bg-neutral-50">Sign In</Link>
+                <Link to="/signup" className="flex-1 text-center py-2 bg-primary text-white rounded-lg text-xs font-bold hover:bg-primary/90">Join Free</Link>
+              </div>
+            </div>
+          )}
+
           <div className="mb-6">
             <SearchBar value={searchTerm} onChange={setSearchTerm} />
           </div>
@@ -239,17 +250,18 @@ const Home = () => {
             parks={filteredParks} 
             selectedPark={selectedPark} 
             onMarkerClick={(park) => { setSelectedPark(park); }} 
-            onChatClick={() => setActiveTab('support')}
+            onChatClick={() => setShowPopupChat(true)}
             onViewDetails={() => setShowDetails(true)}
           />
           
-          <div className="absolute bottom-24 left-1/2 -translate-x-1/2 z-[1000] w-full max-w-sm px-4">
+          <div className="absolute bottom-24 right-6 z-[1000] lg:bottom-12">
              <button 
-               className="btn-primary w-full py-4 flex items-center justify-center gap-2 shadow-xl hover:scale-105 active:scale-95 transition-all"
+               className="btn-primary w-full px-6 py-4 flex items-center justify-center gap-2 shadow-2xl hover:scale-105 active:scale-95 transition-all rounded-full"
                onClick={() => alert('Feature coming soon!')}
              >
                <RiTimeLine size={20} />
-               Report Current Condition
+               <span className="hidden sm:inline">Report Current Condition</span>
+               <span className="sm:hidden">Report</span>
              </button>
           </div>
         </div>
@@ -267,12 +279,14 @@ const Home = () => {
 
   return (
     <div className="app-container">
-      <Navbar 
-        activeTab={activeTab} 
-        onTabChange={setActiveTab} 
-        onProfileClick={() => setShowProfile(true)} 
-        user={user}
-      />
+      <div className="hidden lg:block">
+        <Navbar 
+          activeTab={activeTab} 
+          onTabChange={setActiveTab} 
+          onProfileClick={() => setShowProfile(true)} 
+          user={user}
+        />
+      </div>
       
       {renderContent()}
 
@@ -337,14 +351,20 @@ const Home = () => {
 
       {/* Responsive Navigation for Mobile and Tablets */}
       <div className="lg:hidden">
-        <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
+        <BottomNav 
+          activeTab={activeTab} 
+          onTabChange={setActiveTab} 
+          onProfileClick={() => setShowProfile(true)} 
+        />
       </div>
 
 
       
+      {showPopupChat && <Chatbot onClose={() => setShowPopupChat(false)} />}
+      
       {showDetails && selectedPark && (
-        <div className="fixed inset-0 z-[6500] pointer-events-none flex items-end lg:items-center justify-center lg:justify-end lg:pr-12 p-4">
-           <div className="pointer-events-auto w-full max-w-md bg-white h-[90vh] lg:h-auto rounded-[32px] shadow-2xl overflow-hidden animate-slide-up border border-neutral-100">
+        <div className="fixed inset-0 z-[6500] pointer-events-none flex items-start justify-start p-4 lg:p-8">
+           <div className="pointer-events-auto w-full max-w-[380px] bg-white rounded-[32px] shadow-2xl overflow-hidden animate-modal-pop border border-neutral-100">
               <SnapshotPanel 
                 park={selectedPark} 
                 onClose={() => setShowDetails(false)} 
