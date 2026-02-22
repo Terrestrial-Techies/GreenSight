@@ -98,8 +98,8 @@ const Chatbot = ({ onClose, isFullPage = false }) => {
             placeholder="Ask anything about green spaces in Lagos..."
             autoFocus
           />
-          <button type="submit" disabled={!input.trim() || isTyping} className="btn-primary">
-            <RiArrowUpLine size={24} />
+          <button type="submit" disabled={!input.trim() || isTyping} className="chatbot-send-btn">
+            <RiArrowUpLine size={28} />
           </button>
         </form>
       </div>

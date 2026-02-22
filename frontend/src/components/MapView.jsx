@@ -176,6 +176,7 @@ const MapView = ({ parks = [], selectedPark, onMarkerClick, onChatClick, onViewD
                   src={displayPark.image || `https://images.unsplash.com/photo-1585829365291-1762f59ed290?auto=format&fit=crop&q=80&w=200`} 
                   alt={displayPark.name} 
                   className="w-full h-full object-cover"
+                  onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1585829365291-1762f59ed290?auto=format&fit=crop&q=80&w=200'; }}
                 />
               </div>
               <div className="flex-1 min-w-0 flex flex-col justify-center">
@@ -207,9 +208,9 @@ const MapView = ({ parks = [], selectedPark, onMarkerClick, onChatClick, onViewD
                   <div className="ml-auto flex gap-2">
                     <button 
                       onClick={() => handleOpenDetails(displayPark)}
-                      className="bg-neutral-100 text-neutral-900 text-[11px] font-bold px-3 py-1.5 rounded-lg border border-black/5 hover:bg-neutral-200 transition-colors"
+                      className="text-primary text-[11px] font-bold px-3 py-1.5 rounded-lg border border-primary/20 hover:bg-primary/5 transition-colors"
                     >
-                      Details
+                      View Details
                     </button>
                     <button 
                       onClick={() => setShowDirections(!showDirections)}
