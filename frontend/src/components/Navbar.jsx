@@ -1,7 +1,9 @@
 import { RiMapPinLine, RiTreeLine, RiGroupLine, RiChatVoiceLine, RiUserLine, RiLeafLine } from 'react-icons/ri';
+import { useNavigate } from 'react-router-dom';
 import './Navbar.css';
 
 const Navbar = ({ activeTab, onTabChange, onProfileClick, user }) => {
+  const navigate = useNavigate();
   const tabs = [
     { id: 'explore', icon: RiMapPinLine, label: 'Explore' },
     { id: 'park', icon: RiTreeLine, label: 'Parks' },
@@ -39,10 +41,17 @@ const Navbar = ({ activeTab, onTabChange, onProfileClick, user }) => {
         </div>
 
         <div className="nav-right">
-          <button className="user-profile-btn" onClick={onProfileClick}>
-            <RiUserLine size={20} />
-            <span>{user?.name || user?.email?.split('@')[0] || 'Sign In'}</span>
-          </button>
+          {user ? (
+            <button className="user-profile-btn" onClick={onProfileClick}>
+              <RiUserLine size={20} />
+              <span>{user.name || user.email?.split('@')[0]}</span>
+            </button>
+          ) : (
+            <button className="user-profile-btn sign-in-highlight" onClick={() => navigate('/login')}>
+              <RiUserLine size={20} />
+              <span>Sign In</span>
+            </button>
+          )}
         </div>
       </div>
     </nav>

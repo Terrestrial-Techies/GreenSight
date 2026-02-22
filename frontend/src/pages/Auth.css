@@ -6,9 +6,9 @@
 }
 
 .auth-visual-side {
-  flex: 1.2;
+  flex: 1.5;
   background: linear-gradient(135deg, #1B5E20 0%, #0D2D0F 100%);
-  padding: 48px;
+  padding: 64px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -36,8 +36,9 @@
   flex: 1;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   padding: 40px;
+  padding-left: 100px;
 }
 
 .form-container {
