@@ -62,25 +62,14 @@ const ChangeView = ({ center, zoom, bounds }) => {
   return null;
 };
 
-const MapView = ({ parks = [], selectedPark, onMarkerClick, onChatClick }) => {
+const MapView = ({ parks = [], selectedPark, onMarkerClick, onChatClick, onViewDetails }) => {
   const lagosCenter = [6.458985, 3.426131];
   const [userLoc, setUserLoc] = useState(lagosCenter);
   const [route, setRoute] = useState(null);
   const [showDirections, setShowDirections] = useState(false);
-  const [showSnapshot, setShowSnapshot] = useState(false);
-  const [enrichedPark, setEnrichedPark] = useState(null);
-  const [loadingEnrich, setLoadingEnrich] = useState(false);
 
   const handleOpenDetails = async (park) => {
-    setEnrichedPark(park); // Show modal immediately with DB data
-    setShowSnapshot(true);
-    setLoadingEnrich(true);
-    // Fetch Gemini-enriched version in background
-    const geminiData = await parkService.enrichPark(park.id);
-    if (geminiData) {
-      setEnrichedPark({ ...park, ...geminiData }); // DB park fields + Gemini extras
-    }
-    setLoadingEnrich(false);
+    onViewDetails && onViewDetails(park);
   };
 
   // Get real user location and watch for changes
@@ -240,28 +229,7 @@ const MapView = ({ parks = [], selectedPark, onMarkerClick, onChatClick }) => {
           </div>
         )}
 
-        {/* Snapshot Modal Overlay */}
-        {showSnapshot && enrichedPark && (
-          <div 
-            className="fixed inset-0 z-[2000] flex items-end sm:items-center justify-center animate-fade-in"
-            onClick={(e) => e.target === e.currentTarget && setShowSnapshot(false)}
-          >
-            {/* Blurred Backdrop */}
-            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
-            
-            {/* Modal Card - Mobile Bottom Sheet Style */}
-            <div className="relative w-full sm:max-w-[420px] h-[85vh] sm:h-[80vh] bg-white rounded-t-[32px] sm:rounded-[32px] shadow-2xl overflow-hidden animate-slide-up sm:animate-modal-pop">
-              {/* Mobile Handle */}
-              <div className="w-12 h-1.5 bg-neutral-200 rounded-full mx-auto mt-3 mb-1 sm:hidden"></div>
-              
-              <SnapshotPanel 
-                park={enrichedPark} 
-                isLoading={loadingEnrich}
-                onClose={() => { setShowSnapshot(false); setEnrichedPark(null); }} 
-              />
-            </div>
-          </div>
-        )}
+
 
         {/* Floating Chat/Help Button */}
         <button 

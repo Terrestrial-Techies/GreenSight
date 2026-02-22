@@ -23,6 +23,14 @@
   border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
+.chatbot-container.full-page {
+  max-width: 100%;
+  height: 100%;
+  border-radius: 0;
+  box-shadow: none;
+  border: none;
+}
+
 .chatbot-header {
   padding: 20px 24px;
   border-bottom: 1px solid #f0f0f0;

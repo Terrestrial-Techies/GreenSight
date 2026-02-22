@@ -1,38 +1,38 @@
 import React from 'react';
+import { RiMapPinLine } from 'react-icons/ri';
 
 const LocationModal = ({ onEnable, onDeny }) => {
   return (
-    <div className="fixed top-4 left-4 z-[5000] animate-slide-in-left">
-      <div className="bg-white rounded-2xl p-4 shadow-xl border border-black/5 max-w-[280px]">
-        <h3 className="text-sm font-bold text-neutral-900 mb-1">Enable Location</h3>
-        <p className="text-xs text-neutral-500 mb-3 leading-tight">
-          Allow access to show nearby parks.
+    <div className="fixed inset-0 lg:inset-auto lg:top-24 lg:left-6 z-[5000] flex items-end lg:items-start justify-center lg:justify-start p-4 lg:p-0 pointer-events-none">
+      <div className="bg-white rounded-[28px] p-6 shadow-2xl border border-neutral-100 w-full max-w-[360px] pointer-events-auto animate-slide-up lg:animate-fade-in">
+        <div className="flex items-center gap-4 mb-4">
+          <div className="w-12 h-12 rounded-2xl bg-primary-container flex items-center justify-center text-primary shadow-inner">
+            <RiMapPinLine size={24} />
+          </div>
+          <div>
+            <h3 className="text-lg font-bold text-neutral-900 leading-tight">Explore nearby</h3>
+            <p className="text-[10px] font-bold text-primary uppercase tracking-widest">Lagos Guide</p>
+          </div>
+        </div>
+        <p className="text-sm text-neutral-600 mb-6 leading-relaxed">
+          Enable location to find Lagos' hidden green gems and get real-time condition updates from other explorers.
         </p>
 
-        <div className="flex gap-2">
+        <div className="flex gap-3">
           <button 
             onClick={onDeny}
-            className="flex-1 py-2 px-3 rounded-lg border border-neutral-200 text-xs font-bold text-neutral-600 hover:bg-neutral-50"
+            className="flex-1 py-2.5 px-4 rounded-xl border border-neutral-200 text-xs font-bold text-neutral-600 hover:bg-neutral-50 transition-colors"
           >
-            Later
+            Not now
           </button>
           <button 
             onClick={onEnable}
-            className="flex-1 py-2 px-3 rounded-lg bg-[#07B60A] text-xs font-bold text-white shadow-sm"
+            className="flex-1 py-2.5 px-4 rounded-xl bg-primary text-xs font-bold text-white shadow-md hover:shadow-lg transition-all"
           >
-            Enable
+            Enable GPS
           </button>
         </div>
       </div>
-      <style dangerouslySetInnerHTML={{ __html: `
-        @keyframes slideInLeft {
-          from { transform: translateX(-20px); opacity: 0; }
-          to { transform: translateX(0); opacity: 1; }
-        }
-        .animate-slide-in-left {
-          animation: slideInLeft 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-        }
-      `}} />
     </div>
   );
 };
