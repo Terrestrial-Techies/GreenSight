@@ -35,13 +35,34 @@ const Signup = () => {
   return (
     <div className="m3-auth-page">
       <div className="auth-visual-side">
-        <div className="brand-header">
+        <Link to="/" className="brand-header hover:scale-105 transition-transform">
            <RiLeafLine size={32} className="text-white" />
            <span className="text-2xl font-bold text-white tracking-wide">GreenSight</span>
-        </div>
+           <span className="ml-auto text-xs bg-white/20 px-3 py-1 rounded-full backdrop-blur-md">BACK TO EXPLORE</span>
+        </Link>
         <div className="visual-content">
-          <h1>Join the green revolution in Lagos.</h1>
-          <p>Verified urban spaces for the modern professional. Sign up to explore, report, and preserve nature in the city.</p>
+          <h1>Join the green revolution.</h1>
+          <p>Verified urban spaces for the modern professional. Sign up to explore, report, and preserve nature in Lagos.</p>
+          
+          {/* Mock Profile Preview */}
+          <div className="mock-profile-card mt-12 p-6 bg-white/10 backdrop-blur-xl rounded-3xl border border-white/20 max-w-sm">
+            <div className="flex items-center gap-4 mb-4">
+               <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center text-primary font-bold">TJ</div>
+               <div>
+                 <p className="font-bold">Tunde Johnson</p>
+                 <p className="text-xs text-white/50">Verified Explorer</p>
+               </div>
+            </div>
+            <div className="space-y-3">
+              <div className="h-2 bg-white/20 rounded-full w-full"></div>
+              <div className="h-2 bg-white/20 rounded-full w-4/5"></div>
+              <div className="flex gap-2 pt-2">
+                <div className="w-8 h-8 rounded-lg bg-white/30"></div>
+                <div className="w-8 h-8 rounded-lg bg-white/30"></div>
+                <div className="w-8 h-8 rounded-lg bg-white/30"></div>
+              </div>
+            </div>
+          </div>
         </div>
         <div className="visual-footer">
           <p>© 2026 GreenSight Africa</p>

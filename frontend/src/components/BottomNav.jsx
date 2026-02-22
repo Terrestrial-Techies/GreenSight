@@ -1,4 +1,5 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 import React from 'react';
 <<<<<<< HEAD
 import { RiMapPinLine, RiQuestionAnswerLine, RiGroupLine, RiNotification3Line, RiMessage2Line, RiBuilding4Line, RiBookmarkLine } from 'react-icons/ri';
@@ -7,10 +8,13 @@ import { RiMapPinLine, RiMessage2Line, RiBuilding4Line, RiNotification3Line } fr
 >>>>>>> 5a86afe (review section)
 =======
 import { RiMapPinLine, RiTreeLine, RiGroupLine, RiChatVoiceLine } from 'react-icons/ri';
+=======
+import { RiMapPinLine, RiTreeLine, RiGroupLine, RiChatVoiceLine, RiUserLine } from 'react-icons/ri';
+>>>>>>> 540df4f (new version2)
 import './BottomNav.css';
 >>>>>>> 35c36ca (new version)
 
-const BottomNav = ({ activeTab, onTabChange }) => {
+const BottomNav = ({ activeTab, onTabChange, onProfileClick }) => {
   const tabs = [
     { id: 'explore', icon: RiMapPinLine, label: 'Explore' },
 <<<<<<< HEAD
@@ -55,6 +59,15 @@ const BottomNav = ({ activeTab, onTabChange }) => {
           </button>
         );
       })}
+      <button 
+        className="nav-item"
+        onClick={onProfileClick}
+      >
+        <div className="nav-icon-container">
+           <RiUserLine size={24} />
+        </div>
+        <span className="nav-label">Profile</span>
+      </button>
     </nav>
   );
 };
