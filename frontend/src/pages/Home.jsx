@@ -18,7 +18,7 @@ import { parkService } from '../services/api';
 =======
 import { parkService, authService } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { RiListCheck, RiFilter2Line, RiMapPin2Line, RiTimeLine, RiTreeLine, RiHeartLine, RiHeartFill, RiLeafLine, RiGroupLine, RiLogoutBoxRLine, RiLoginBoxLine } from 'react-icons/ri';
 >>>>>>> 35c36ca (new version)
 
@@ -61,9 +61,9 @@ const Home = () => {
     return saved ? JSON.parse(saved) : [];
   });
   const [showProfile, setShowProfile] = useState(false);
-  const [showDetails, setShowDetails] = useState(false);
   const [showPopupChat, setShowPopupChat] = useState(false);
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
     localStorage.setItem('gs_favorites', JSON.stringify(favorites));
@@ -216,20 +216,20 @@ const Home = () => {
     if (activeTab === 'park') {
       return (
         <div className="flex-1 flex flex-col overflow-hidden animate-fade-in bg-white lg:bg-[#F8F9FA]">
-          <div className="max-w-[1280px] mx-auto w-full px-4 lg:px-8 py-8 flex flex-col h-full">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-              <h2 className="text-3xl font-bold text-neutral-900">Discover Green Spaces</h2>
+          <div className="max-w-6xl mx-auto w-full px-4 lg:px-8 py-4 flex flex-col h-full">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+              <h2 className="text-2xl font-bold text-neutral-900">Discover Green Spaces</h2>
               <div className="w-full md:max-w-xs">
                 <SearchBar value={searchTerm} onChange={setSearchTerm} />
               </div>
             </div>
 
-            <div className="flex gap-2 mb-8 overflow-x-auto pb-2 scrollbar-hide">
+            <div className="flex gap-2 mb-4 overflow-x-auto pb-2 scrollbar-hide">
               {['All', 'Open', 'Busy', 'Closed'].map(f => (
                 <button
                   key={f}
                   onClick={() => setParkFilter(f)}
-                  className={`px-6 py-2.5 rounded-full font-semibold text-sm transition-all shadow-sm ${
+                  className={`px-5 py-2 rounded-full font-bold text-sm transition-all shadow-sm ${
                     parkFilter === f ? 'bg-primary text-white shadow-md' : 'bg-white text-neutral-600 border border-neutral-200'
                   }`}
                 >
@@ -243,7 +243,7 @@ const Home = () => {
                 <div 
                   key={park.id} 
                   className="bg-white rounded-2xl p-4 shadow-sm hover:shadow-md border border-neutral-100 flex flex-col transition-all cursor-pointer group" 
-                  onClick={() => { setSelectedPark(park); setActiveTab('explore'); setShowDetails(true); }}
+                  onClick={() => { setSelectedPark(park); setActiveTab('explore'); }}
                 >
                   <div className="w-full aspect-[4/3] rounded-xl overflow-hidden mb-4">
                     <img 
@@ -254,33 +254,33 @@ const Home = () => {
                   </div>
                   <div className="flex-1 flex flex-col">
                     <div className="flex items-start justify-between mb-1">
-                      <h3 className="text-lg font-bold text-neutral-900 leading-tight">{park.name}</h3>
-                      <div className="flex items-center gap-1 text-accent font-bold text-xs bg-accent/10 px-2 py-0.5 rounded">
+                      <h3 className="text-xl font-bold text-neutral-900 leading-tight">{park.name}</h3>
+                      <div className="flex items-center gap-1 text-accent font-bold text-sm bg-accent/10 px-2 py-1 rounded">
                         ★ 4.8
                       </div>
                     </div>
-                    <p className="text-neutral-500 text-xs flex items-center gap-1 mb-3">
-                      <RiMapPin2Line size={14} className="text-primary" /> {park.location || 'Lagos, Nigeria'}
+                    <p className="text-neutral-500 text-sm flex items-center gap-1 mb-3">
+                      <RiMapPin2Line size={16} className="text-primary" /> {park.location || 'Lagos, Nigeria'}
                     </p>
                     <div className="flex flex-wrap gap-1.5 mb-4">
-                      <span className="text-[9px] font-bold uppercase tracking-wider bg-primary/10 text-primary px-2 py-0.5 rounded">
+                      <span className="text-[11px] font-bold uppercase tracking-wider bg-primary/10 text-primary px-2.5 py-1 rounded">
                         {park.pricing || 'Free'}
                       </span>
-                      <span className="text-[9px] font-bold uppercase tracking-wider bg-neutral-100 text-neutral-500 px-2 py-0.5 rounded">
+                      <span className="text-[11px] font-bold uppercase tracking-wider bg-neutral-100 text-neutral-500 px-2.5 py-1 rounded">
                         Waterfall
                       </span>
-                      <span className="text-[9px] font-bold uppercase tracking-wider bg-neutral-100 text-neutral-500 px-2 py-0.5 rounded">
+                      <span className="text-[11px] font-bold uppercase tracking-wider bg-neutral-100 text-neutral-500 px-2.5 py-1 rounded">
                         Quiet Zone
                       </span>
                     </div>
                     <div className="mt-auto flex items-center justify-between pt-3 border-t border-neutral-50">
                       <div className="flex flex-col">
-                        <span className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest">Live Flow</span>
-                        <span className="text-primary font-bold text-xs">{park.live_crowd || 'Moderate'}</span>
+                        <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">Live Flow</span>
+                        <span className="text-primary font-bold text-sm">{park.live_crowd || 'Moderate'}</span>
                       </div>
                       <button 
-                        className="bg-primary/10 text-primary px-3 py-1.5 rounded-lg font-bold text-[10px] hover:bg-primary hover:text-white transition-colors"
-                        onClick={(e) => { e.stopPropagation(); setSelectedPark(park); setActiveTab('explore'); setShowDetails(true); }}
+                        className="bg-primary/10 text-primary px-4 py-2 rounded-lg font-bold text-[12px] hover:bg-primary hover:text-white transition-colors"
+                        onClick={(e) => { e.stopPropagation(); navigate(`/park/${park.id}`); }}
                       >
                         Details
                       </button>
@@ -302,7 +302,7 @@ const Home = () => {
         </div>
 
         {/* Sidebar for Desktop - Left Side */}
-        <div className="hidden xl:flex flex-col w-[420px] border-r border-neutral-100 p-6 overflow-y-auto scrollbar-hide bg-[#F8F9FA]">
+        <div className="hidden xl:flex flex-col w-[380px] border-r border-neutral-100 p-6 overflow-y-auto scrollbar-hide bg-[#F8F9FA]">
           <div className="mb-6">
             <h2 className="text-xl font-bold text-neutral-900 mb-1">Explore Nigeria</h2>
             <p className="text-[11px] text-neutral-500 font-medium uppercase tracking-wider">Top rated urban green spaces</p>
@@ -334,11 +334,11 @@ const Home = () => {
         {/* Main Interactive Map Area - Right Side */}
         <div className="flex-1 relative overflow-hidden bg-neutral-100">
           <MapView 
-            parks={filteredParks} 
+            parks={filteredParks}
             selectedPark={selectedPark} 
             onMarkerClick={(park) => { setSelectedPark(park); }} 
             onChatClick={() => setShowPopupChat(true)}
-            onViewDetails={() => setShowDetails(true)}
+            onViewDetails={(park) => navigate(`/park/${park.id}`)}
           />
           
           <div className="absolute bottom-24 right-6 z-[1000] lg:bottom-12">
@@ -449,19 +449,6 @@ const Home = () => {
 
       
       {showPopupChat && <Chatbot onClose={() => setShowPopupChat(false)} />}
-      
-      {showDetails && selectedPark && (
-        <div className="fixed inset-0 z-[6500] pointer-events-none flex items-start justify-start p-4 lg:p-8">
-           <div className="pointer-events-auto w-full max-w-[380px] bg-white rounded-[32px] shadow-2xl overflow-hidden animate-modal-pop border border-neutral-100">
-              <SnapshotPanel 
-                park={selectedPark} 
-                onClose={() => setShowDetails(false)} 
-                onToggleFavorite={toggleFavorite}
-                isFavorite={favorites.some(f => f.id === selectedPark.id)}
-              />
-           </div>
-        </div>
-      )}
       
       {showLocationModal && (
         <LocationModal 
