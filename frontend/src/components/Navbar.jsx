@@ -1,34 +1,48 @@
-import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { RiLeafFill, RiUserLine, RiLogoutBoxRLine } from 'react-icons/ri';
+import { RiMapPinLine, RiTreeLine, RiGroupLine, RiChatVoiceLine, RiUserLine, RiLeafLine } from 'react-icons/ri';
 import './Navbar.css';
 
-const Navbar = () => {
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
+const Navbar = ({ activeTab, onTabChange, onProfileClick, user }) => {
+  const tabs = [
+    { id: 'explore', icon: RiMapPinLine, label: 'Explore' },
+    { id: 'park', icon: RiTreeLine, label: 'Parks' },
+    { id: 'review', icon: RiGroupLine, label: 'Community' },
+    { id: 'support', icon: RiChatVoiceLine, label: 'AI Support' },
+  ];
 
   return (
-    <nav className="navbar glass-morphism">
-      <div className="navbar-container">
-        <Link to="/" className="navbar-logo">
-          <RiLeafFill className="logo-icon" />
-          <span className="logo-text">Green<span>Sight</span></span>
-        </Link>
-        <div className="navbar-links">
-          {user ? (
-            <div className="user-menu">
-              <span className="welcome-text">Hi, {user.name || 'Explorer'}</span>
-              <button onClick={logout} className="logout-btn" title="Logout">
-                <RiLogoutBoxRLine size={20} />
-              </button>
-            </div>
-          ) : (
-            <div className="auth-btns">
-              <Link to="/login" className="btn-secondary">Login</Link>
-              <Link to="/signup" className="btn-primary">Get Started</Link>
-            </div>
-          )}
+    <nav className="m3-navbar">
+      <div className="nav-content">
+        <div className="nav-left">
+          <div className="brand" onClick={() => onTabChange('explore')}>
+            <RiLeafLine className="brand-icon" />
+            <span className="brand-name">Green<span>Sight</span></span>
+          </div>
+        </div>
+
+        <div className="nav-center">
+          <div className="m3-tabs">
+            {tabs.map((tab) => {
+              const Icon = tab.icon;
+              const isActive = activeTab === tab.id;
+              return (
+                <button 
+                  key={tab.id}
+                  onClick={() => onTabChange(tab.id)}
+                  className={`m3-tab-item ${isActive ? 'active' : ''}`}
+                >
+                  <Icon size={20} />
+                  <span>{tab.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="nav-right">
+          <button className="user-profile-btn" onClick={onProfileClick}>
+            <RiUserLine size={20} />
+            <span>{user?.name || user?.email?.split('@')[0] || 'Sign In'}</span>
+          </button>
         </div>
       </div>
     </nav>

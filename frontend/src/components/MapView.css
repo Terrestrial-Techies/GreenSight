@@ -1,32 +1,43 @@
 .map-view-container {
-  padding: 16px;
+  width: 100%;
+  height: 100%;
 }
 
 .map-box {
   width: 100%;
-  height: 320px;
-  background-color: #000;
-  border-radius: 20px;
-  overflow: hidden;
+  height: 100%;
+  background-color: #E7E0EC;
   position: relative;
-  box-shadow: var(--shadow);
+  overflow: hidden;
 }
 
 .chat-fab {
   position: absolute;
-  bottom: 16px;
-  right: 16px;
+  bottom: 24px;
+  right: 24px;
   width: 56px;
   height: 56px;
-  background-color: #e2e8f0;
-  color: #4a5568;
-  border-radius: 50%;
-  border: 4px solid white;
+  background-color: #FFFFFF;
+  color: #1B5E20;
+  border-radius: 16px; /* Material 3 M3 FAB squared-circle */
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 8px 3px rgba(0,0,0,0.15), 0 1px 3px rgba(0,0,0,0.3);
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.chat-fab:hover {
+  background-color: #F8F9FA;
+  box-shadow: 0 6px 10px 4px rgba(0,0,0,0.15), 0 1px 2px rgba(0,0,0,0.3);
+  transform: translateY(-2px);
+}
+
+.chat-fab:active {
+  transform: scale(0.95);
 }
 
 /* Custom Pin Styles */
@@ -37,14 +48,16 @@
 }
 
 .pin {
-  width: 24px;
-  height: 24px;
+  width: 28px;
+  height: 28px;
   border-radius: 50% 50% 50% 0;
   transform: rotate(-45deg);
   border: 2px solid white;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.25);
 }
 
 .leaflet-container {
-  background: #000 !important;
+  background: #E7E0EC !important;
+  width: 100%;
+  height: 100%;
 }

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 import { RiCloseLine, RiShareLine, RiNavigationFill, RiTimeLine, RiInformationFill } from 'react-icons/ri';
 import './SnapshotPanel.css';
 import ReportModal from './ReportModal';
@@ -67,6 +68,12 @@ import './SnapshotPanel.css';
 
 const SnapshotPanel = ({ park, onClose }) => {
 >>>>>>> 5a86afe (review section)
+=======
+import { RiCloseLine, RiDirectionLine, RiBookmarkLine, RiInformationLine, RiCheckLine, RiHeartLine, RiHeartFill } from 'react-icons/ri';
+import './SnapshotPanel.css';
+
+const SnapshotPanel = ({ park, onClose, onToggleFavorite, isFavorite }) => {
+>>>>>>> 35c36ca (new version)
   const [isExpanded, setIsExpanded] = useState(false);
 
   if (!park) return null;
@@ -309,6 +316,14 @@ const SnapshotPanel = ({ park, onClose }) => {
           </div>
         ) : (
           <div className="expanded-content animate-fade-in">
+             {/* AI Snapshot Summary */}
+            <div className="section-block ai-summary-section">
+              <h3>AI Snapshot Summary</h3>
+              <div className="ai-bubble">
+                <p>{park.ai_summary || "This space is perfect for quiet relaxation, featuring well-maintained paths and plenty of seating. It's currently in excellent condition and ideal for urban escape."}</p>
+              </div>
+            </div>
+
              <div className="divider"></div>
             
             {/* Real Time Conditions */}
@@ -434,8 +449,17 @@ const SnapshotPanel = ({ park, onClose }) => {
 
             {/* Footer Buttons */}
             <div className="expanded-footer">
-              <button className="btn-get-directions">Get directions</button>
-              <button className="btn-save-fav">Save to favourites</button>
+              <button className="btn-get-directions flex-1 py-3 bg-primary text-white rounded-xl font-bold flex items-center justify-center gap-2">
+                <RiDirectionLine size={20} />
+                Get Directions
+              </button>
+              <button 
+                className={`btn-save-fav p-3 rounded-xl border transition-all ${isFavorite ? 'bg-primary/10 border-primary/20 text-primary' : 'bg-white border-neutral-200 text-neutral-400 hover:text-primary hover:border-primary/20'}`}
+                onClick={() => onToggleFavorite(park)}
+                title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+              >
+                {isFavorite ? <RiHeartFill size={24} /> : <RiHeartLine size={24} />}
+              </button>
             </div>
           </div>
         )}

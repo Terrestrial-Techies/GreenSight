@@ -243,6 +243,35 @@
   background: #07B60A;
 }
 
+/* AI Summary Section */
+.ai-summary-section {
+  margin-top: 8px;
+}
+
+.ai-bubble {
+  background: linear-gradient(135deg, rgba(7, 182, 10, 0.05), rgba(7, 182, 10, 0.1));
+  border: 1px solid rgba(7, 182, 10, 0.1);
+  padding: 16px;
+  border-radius: 20px;
+  position: relative;
+}
+
+.ai-bubble p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #111;
+  font-style: italic;
+}
+
+.ai-bubble::before {
+  content: '✨';
+  position: absolute;
+  top: -10px;
+  right: 12px;
+  font-size: 18px;
+}
+
 .animate-fade-in {
   animation: fadeIn 0.4s ease-out forwards;
 }

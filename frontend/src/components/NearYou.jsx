@@ -1,11 +1,11 @@
 import React from 'react';
 import './NearYou.css';
 
-const NearYou = ({ parks, onParkClick }) => {
+const NearYou = ({ parks, onParkClick, desktopLayout }) => {
   return (
-    <div className="near-you">
-      <h2 className="section-title">Near You</h2>
-      <div className="horizontal-scroll">
+    <div className={`near-you ${desktopLayout ? 'desktop-layout' : ''}`}>
+      {!desktopLayout && <h2 className="section-title">Near You</h2>}
+      <div className={desktopLayout ? "vertical-stack" : "horizontal-scroll"}>
         {parks.map((park) => (
           <div 
             key={park.id} 

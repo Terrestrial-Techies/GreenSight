@@ -1,13 +1,19 @@
+<<<<<<< HEAD
 import React from 'react';
 <<<<<<< HEAD
 import { RiMapPinLine, RiQuestionAnswerLine, RiGroupLine, RiNotification3Line, RiMessage2Line, RiBuilding4Line, RiBookmarkLine } from 'react-icons/ri';
 =======
 import { RiMapPinLine, RiMessage2Line, RiBuilding4Line, RiNotification3Line } from 'react-icons/ri';
 >>>>>>> 5a86afe (review section)
+=======
+import { RiMapPinLine, RiTreeLine, RiGroupLine, RiChatVoiceLine } from 'react-icons/ri';
+import './BottomNav.css';
+>>>>>>> 35c36ca (new version)
 
 const BottomNav = ({ activeTab, onTabChange }) => {
   const tabs = [
     { id: 'explore', icon: RiMapPinLine, label: 'Explore' },
+<<<<<<< HEAD
     { id: 'reviews', icon: RiMessage2Line, label: 'Reviews' },
     { id: 'park', icon: RiBuilding4Line, label: 'Park' },
 <<<<<<< HEAD
@@ -18,22 +24,34 @@ const BottomNav = ({ activeTab, onTabChange }) => {
 =======
     { id: 'notifications', icon: RiNotification3Line, label: 'Notifications' },
 >>>>>>> 5a86afe (review section)
+=======
+    { id: 'park', icon: RiTreeLine, label: 'Parks' },
+    { id: 'review', icon: RiGroupLine, label: 'Community' },
+    { id: 'support', icon: RiChatVoiceLine, label: 'Support' },
+>>>>>>> 35c36ca (new version)
   ];
 
   return (
-    <nav className="sticky bottom-0 left-0 right-0 h-[70px] bg-white/95 backdrop-blur-md flex justify-around items-center px-3 border-t border-black/5 z-[100] pb-safe">
+    <nav className="bottom-nav">
       {tabs.map((tab) => {
         const Icon = tab.icon;
         const isActive = activeTab === tab.id;
         return (
           <button 
             key={tab.id} 
-            className={`flex flex-col items-center gap-1 relative flex-1 py-2 active:opacity-70 transition-opacity ${isActive ? 'text-primary' : 'text-neutral-400'}`}
+            className={`nav-item ${isActive ? 'active' : ''}`}
             onClick={() => onTabChange(tab.id)}
           >
+<<<<<<< HEAD
             <Icon size={24} />
             <span className="text-[12px] font-medium">{tab.label}</span>
             {isActive && <div className="absolute -bottom-1 w-6 h-0.5 bg-primary rounded-full transition-all" />}
+=======
+            <div className="nav-icon-container">
+               <Icon size={24} />
+            </div>
+            <span className="nav-label">{tab.label}</span>
+>>>>>>> 35c36ca (new version)
           </button>
         );
       })}
@@ -42,4 +60,3 @@ const BottomNav = ({ activeTab, onTabChange }) => {
 };
 
 export default BottomNav;
-
