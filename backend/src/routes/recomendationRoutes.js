@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const verifyToken = require("../middleware/authMiddleware");
-const supabase = require("../config/supabaseClient");
+const supabase = require("../config/supabase");
 const { getRecommendations } = require("../services/recomendationService");
 
 
