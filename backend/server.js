@@ -16,6 +16,7 @@ const recommendationRoutes = require("./src/routes/recomendationRoutes");
 const notificationsRoutes = require("./src/routes/notificationsRoutes");
 const communityRoutes = require("./src/routes/communityRoutes");
 const supportRoutes = require("./src/routes/supportRoutes");
+const imageRoutes = require("./src/routes/imageRoutes");
 
 app.use("/auth", authRoutes);
 app.use("/parks", parkRoutes);
@@ -24,6 +25,7 @@ app.use("/recommendations", recommendationRoutes);
 app.use('/notifications', notificationsRoutes);
 app.use('/community', communityRoutes);
 app.use('/support', supportRoutes);
+app.use("/parks", imageRoutes);
 
 const PORT = 5000;
 app.listen(PORT, "0.0.0.0", () => {
