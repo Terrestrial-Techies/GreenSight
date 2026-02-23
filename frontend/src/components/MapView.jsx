@@ -3,6 +3,8 @@ import { MapContainer, TileLayer, Marker, useMap, Polyline } from 'react-leaflet
 import L from 'leaflet';
 import { RiChat3Line, RiStarFill, RiDirectionLine } from 'react-icons/ri';
 import 'leaflet/dist/leaflet.css';
+import SnapshotPanel from './SnapshotPanel';
+import { parkService } from '../services/api';
 
 // Custom SVG Marker with Rating Label
 const createIcon = (color, rating, name) => {
@@ -60,22 +62,38 @@ const ChangeView = ({ center, zoom, bounds }) => {
   return null;
 };
 
-const MapView = ({ parks = [], selectedPark, onMarkerClick }) => {
+const MapView = ({ parks = [], selectedPark, onMarkerClick, onChatClick, onViewDetails }) => {
   const lagosCenter = [6.458985, 3.426131];
-  const userLoc = [6.4441, 3.3901]; // Mock user location in Lagos
-  
+  const [userLoc, setUserLoc] = useState(lagosCenter);
   const [route, setRoute] = useState(null);
   const [showDirections, setShowDirections] = useState(false);
-  
-  // Decide which park to show on the map (selected or first available)
-  const displayPark = selectedPark || (parks.length > 0 ? parks[0] : null);
 
-  // Fetch route when showDirections is toggled
+  const handleOpenDetails = async (park) => {
+    onViewDetails && onViewDetails(park);
+  };
+
+  // Get real user location and watch for changes
   useEffect(() => {
-    if (showDirections && displayPark) {
+    if ("geolocation" in navigator) {
+      const watchId = navigator.geolocation.watchPosition(
+        (position) => {
+          setUserLoc([position.coords.latitude, position.coords.longitude]);
+        },
+        (error) => console.error("Error watching location:", error),
+        { enableHighAccuracy: true }
+      );
+      return () => navigator.geolocation.clearWatch(watchId);
+    }
+  }, []);
+  
+  // Decide which park to focus on the map (selected or user center)
+  const displayPark = selectedPark;
+
+  // Fetch route when showDirections is toggled or user position changes
+  useEffect(() => {
+    if (showDirections && displayPark && userLoc) {
       const fetchRoute = async () => {
         try {
-          // OSRM expects [lon, lat]
           const url = `https://router.project-osrm.org/route/v1/driving/${userLoc[1]},${userLoc[0]};${displayPark.lng},${displayPark.lat}?overview=full&geometries=geojson`;
           const res = await fetch(url);
           const data = await res.json();
@@ -91,7 +109,7 @@ const MapView = ({ parks = [], selectedPark, onMarkerClick }) => {
     } else {
       setRoute(null);
     }
-  }, [showDirections, displayPark]);
+  }, [showDirections, displayPark, userLoc]);
 
   const getConditionColor = (park) => {
     if (!park) return '#07B60A'; 
@@ -100,8 +118,6 @@ const MapView = ({ parks = [], selectedPark, onMarkerClick }) => {
     if (condition === 'average') return '#F99D1B';
     return '#07B60A';
   };
-
-  const markerColor = getConditionColor(displayPark);
 
   return (
     <div className="px-4">
@@ -125,16 +141,17 @@ const MapView = ({ parks = [], selectedPark, onMarkerClick }) => {
 
           <Marker position={userLoc} icon={UserIcon} />
 
-          {displayPark && (
+          {/* Render ALL Parks with their status colors */}
+          {parks.map((park) => (
             <Marker 
-              key={displayPark.id}
-              position={[displayPark.lat, displayPark.lng]}
-              icon={createIcon(markerColor, '4.8', displayPark.name)}
+              key={park.id}
+              position={[park.lat, park.lng]}
+              icon={createIcon(getConditionColor(park), park.rating || '4.8', park.name)}
               eventHandlers={{
-                click: () => onMarkerClick && onMarkerClick(displayPark)
+                click: () => onMarkerClick && onMarkerClick(park)
               }}
             />
-          )}
+          ))}
 
           {route && (
             <Polyline 
@@ -159,6 +176,7 @@ const MapView = ({ parks = [], selectedPark, onMarkerClick }) => {
                   src={displayPark.image || `https://images.unsplash.com/photo-1585829365291-1762f59ed290?auto=format&fit=crop&q=80&w=200`} 
                   alt={displayPark.name} 
                   className="w-full h-full object-cover"
+                  onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1585829365291-1762f59ed290?auto=format&fit=crop&q=80&w=200'; }}
                 />
               </div>
               <div className="flex-1 min-w-0 flex flex-col justify-center">
@@ -169,8 +187,16 @@ const MapView = ({ parks = [], selectedPark, onMarkerClick }) => {
                     <span className="text-[10px] font-black text-accent">4.8</span>
                   </div>
                 </div>
-                <p className="text-[11px] text-neutral-400 truncate mb-1.5">Nearby Green Space • Lagos</p>
-                <div className="flex items-center gap-2 mt-1">
+                <p className="text-[11px] text-neutral-400 truncate mb-1">Nearby Green Space • Lagos</p>
+                
+                {/* AI Review Summary */}
+                <div className="bg-neutral-50 px-2 py-1.5 rounded-lg mb-2 border border-black/[0.03]">
+                  <p className="text-[10px] text-neutral-600 line-clamp-2 italic">
+                    "{displayPark.ai_summary || "AI Summary: A peaceful retreat with great amenities and well-maintained gardens."}"
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2">
                   <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${
                     displayPark.condition?.toLowerCase() === 'bad' ? 'bg-error/10 text-error' :
                     displayPark.condition?.toLowerCase() === 'average' ? 'bg-warning/10 text-warning' :
@@ -179,29 +205,41 @@ const MapView = ({ parks = [], selectedPark, onMarkerClick }) => {
                     {displayPark.condition || 'Good'}
                   </span>
                   
-                  <button 
-                    onClick={() => setShowDirections(!showDirections)}
-                    className={`ml-auto text-[11px] font-bold px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-all shadow-sm ${
-                      showDirections 
-                      ? 'bg-neutral-900 text-white' 
-                      : 'bg-primary text-white hover:bg-primary/90'
-                    }`}
-                  >
-                    <RiDirectionLine size={14} />
-                    {showDirections ? 'Close Path' : 'Directions'}
-                  </button>
+                  <div className="ml-auto flex gap-2">
+                    <button 
+                      onClick={() => handleOpenDetails(displayPark)}
+                      className="text-primary text-[11px] font-bold px-3 py-1.5 rounded-lg border border-primary/20 hover:bg-primary/5 transition-colors"
+                    >
+                      View Details
+                    </button>
+                    <button 
+                      onClick={() => setShowDirections(!showDirections)}
+                      className={`text-[11px] font-bold px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-all shadow-sm ${
+                        showDirections 
+                        ? 'bg-neutral-900 text-white' 
+                        : 'bg-primary text-white hover:bg-primary/90'
+                      }`}
+                    >
+                      <RiDirectionLine size={14} />
+                      {showDirections ? 'Close' : 'Directions'}
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         )}
 
+
+
         {/* Floating Chat/Help Button */}
-        {!displayPark && (
-          <button className="absolute bottom-4 right-4 w-12 h-12 bg-white text-neutral-900 rounded-full border border-black/5 flex items-center justify-center z-[1000] shadow-md active:scale-95 transition-transform">
-            <RiChat3Line size={24} />
-          </button>
-        )}
+        <button 
+          onClick={onChatClick}
+          className="absolute bottom-20 right-4 w-12 h-12 bg-white text-primary rounded-full border border-black/5 flex items-center justify-center z-[1000] shadow-lg active:scale-95 transition-all hover:bg-primary hover:text-white group"
+        >
+          <RiChat3Line size={24} className="group-hover:animate-bounce" />
+          <div className="absolute -top-1 -right-1 w-3 h-3 bg-error rounded-full border-2 border-white"></div>
+        </button>
       </div>
 
       <style dangerouslySetInnerHTML={{ __html: `
@@ -212,6 +250,20 @@ const MapView = ({ parks = [], selectedPark, onMarkerClick }) => {
         @keyframes slideUp {
           from { transform: translateY(100%); opacity: 0; }
           to { transform: translateY(0); opacity: 1; }
+        }
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        @keyframes modalPop {
+          from { transform: scale(0.9) translateY(20px); opacity: 0; }
+          to { transform: scale(1) translateY(0); opacity: 1; }
+        }
+        .animate-fade-in {
+          animation: fadeIn 0.3s ease-out forwards;
+        }
+        .animate-modal-pop {
+          animation: modalPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
         }
         .animate-slide-up {
           animation: slideUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;

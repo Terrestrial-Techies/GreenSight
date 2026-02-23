@@ -1,22 +1,21 @@
 import React from 'react';
-import { RiSearchLine } from 'react-icons/ri';
+import { RiSearch2Line } from 'react-icons/ri';
 
 const SearchBar = ({ value, onChange }) => {
   return (
-    <div className="px-4 py-2 bg-white">
-      <div className="relative flex items-center bg-white border-[1.5px] border-neutral-50 rounded-full px-4 h-12 focus-within:border-primary transition-colors">
-        <RiSearchLine className="text-neutral-400 mr-3" size={20} />
-        <input 
-          type="text" 
-          placeholder="Search nearby parks" 
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          className="border-none bg-transparent w-full h-full font-body text-base text-neutral-900 outline-none placeholder:text-neutral-400"
-        />
+    <div className="relative group">
+      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+        <RiSearch2Line className="text-neutral-400 group-focus-within:text-primary transition-colors" size={18} />
       </div>
+      <input 
+        type="text" 
+        placeholder="Search Lagos parks..." 
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="block w-full pl-11 pr-4 py-3 border border-neutral-200 rounded-full bg-white text-sm text-neutral-900 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-sm"
+      />
     </div>
   );
 };
 
 export default SearchBar;
-

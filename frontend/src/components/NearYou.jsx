@@ -1,30 +1,30 @@
-const NearYou = ({ parks, onParkClick }) => {
+import React from 'react';
+import './NearYou.css';
+
+const NearYou = ({ parks, onParkClick, desktopLayout }) => {
   return (
-    <section className="py-4">
-      <h2 className="px-4 text-[18px] font-heading font-bold mb-3 text-neutral-900">Near You</h2>
-      <div className="flex gap-4 overflow-x-auto px-4 pb-4 scrollbar-hide">
+    <div className={`near-you ${desktopLayout ? 'desktop-layout' : ''}`}>
+      {!desktopLayout && <h2 className="section-title">Near You</h2>}
+      <div className={desktopLayout ? "vertical-stack" : "horizontal-scroll"}>
         {parks.map((park) => (
-          <button 
+          <div 
             key={park.id} 
-            onClick={() => onParkClick && onParkClick(park)}
-            className="flex-none w-[140px] text-left group transition-transform active:scale-95"
+            className="park-preview-card"
+            onClick={() => onParkClick(park)}
           >
-            <div className="w-[140px] h-[180px] rounded-2xl overflow-hidden shadow-sm bg-neutral-50 mb-2 border border-black/5">
-              <img 
-                src={park.image || `https://source.unsplash.com/featured/?park,nature&sig=${park.id}`} 
-                alt={park.name} 
-                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-              />
+            <img 
+              src={park.image || `https://images.unsplash.com/photo-1585829365291-1762f59ed290?auto=format&fit=crop&q=80&w=200`} 
+              alt={park.name} 
+              className="park-preview-image"
+            />
+            <div className="park-preview-overlay">
+              <span className="park-preview-name">{park.name}</span>
             </div>
-            <h3 className="text-sm font-bold text-neutral-900 truncate px-1">{park.name}</h3>
-            <p className="text-xs text-neutral-400 capitalize px-1">{park.condition || 'Good'} condition</p>
-          </button>
+          </div>
         ))}
       </div>
-    </section>
+    </div>
   );
 };
 
-
 export default NearYou;
-

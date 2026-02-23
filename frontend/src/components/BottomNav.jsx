@@ -1,37 +1,43 @@
-import React from 'react';
-import { RiMapPinLine, RiQuestionAnswerLine, RiGroupLine, RiNotification3Line, RiMessage2Line, RiBuilding4Line, RiBookmarkLine } from 'react-icons/ri';
+import { RiMapPinLine, RiTreeLine, RiGroupLine, RiChatVoiceLine, RiUserLine } from 'react-icons/ri';
+import './BottomNav.css';
 
-const BottomNav = ({ activeTab, onTabChange }) => {
+const BottomNav = ({ activeTab, onTabChange, onProfileClick }) => {
   const tabs = [
     { id: 'explore', icon: RiMapPinLine, label: 'Explore' },
-    { id: 'reviews', icon: RiMessage2Line, label: 'Reviews' },
-    { id: 'park', icon: RiBuilding4Line, label: 'Park' },
-    { id: 'saved', icon: RiBookmarkLine, label: 'Saved' },
-    { id: 'notifications', icon: RiNotification3Line, label: 'Notifications' },
-    { id: 'support', icon: RiQuestionAnswerLine, label: 'Support' },
-    { id: 'community', icon: RiGroupLine, label: 'Community' },
+    { id: 'park', icon: RiTreeLine, label: 'Parks' },
+    { id: 'review', icon: RiGroupLine, label: 'Community' },
+    { id: 'support', icon: RiChatVoiceLine, label: 'Support' },
   ];
 
   return (
-    <nav className="absolute bottom-0 left-0 right-0 h-[70px] bg-neutral-50 flex justify-around items-center px-3 border-t border-black/5 z-[100]">
+    <nav className="bottom-nav">
       {tabs.map((tab) => {
         const Icon = tab.icon;
         const isActive = activeTab === tab.id;
         return (
           <button 
             key={tab.id} 
-            className={`flex flex-col items-center gap-1 relative flex-1 py-2 active:opacity-70 transition-opacity ${isActive ? 'text-primary' : 'text-neutral-400'}`}
+            className={`nav-item ${isActive ? 'active' : ''}`}
             onClick={() => onTabChange(tab.id)}
           >
-            <Icon size={24} />
-            <span className="text-[12px] font-medium">{tab.label}</span>
-            {isActive && <div className="absolute -bottom-1 w-6 h-0.5 bg-primary rounded-full transition-all" />}
+            <div className="nav-icon-container">
+               <Icon size={24} />
+            </div>
+            <span className="nav-label">{tab.label}</span>
           </button>
         );
       })}
+      <button 
+        className="nav-item"
+        onClick={onProfileClick}
+      >
+        <div className="nav-icon-container">
+           <RiUserLine size={24} />
+        </div>
+        <span className="nav-label">Profile</span>
+      </button>
     </nav>
   );
 };
 
 export default BottomNav;
-
