@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: greensight-frontend
+    runtime: static
+    buildCommand: npm install && npm run build
+    staticPublishPath: ./dist
+    envVars:
+      - key: REACT_APP_API_URL
+        value: https://greensight-2r7r.onrender.com
