@@ -260,7 +260,7 @@ const Home = () => {
                onClick={() => alert('Feature coming soon!')}
              >
                <RiTimeLine size={20} />
-               <span className="hidden sm:inline">Report Current Condition</span>
+               <span className="hidden sm:inline">Share Review</span>
                <span className="sm:hidden">Report</span>
              </button>
           </div>

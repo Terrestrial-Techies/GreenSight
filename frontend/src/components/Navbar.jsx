@@ -1,6 +1,7 @@
 import { RiMapPinLine, RiTreeLine, RiGroupLine, RiChatVoiceLine, RiUserLine, RiLeafLine } from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
 import './Navbar.css';
+import logo from '../assets/Images/logo.svg';
 
 const Navbar = ({ activeTab, onTabChange, onProfileClick, user }) => {
   const navigate = useNavigate();
@@ -16,8 +17,9 @@ const Navbar = ({ activeTab, onTabChange, onProfileClick, user }) => {
       <div className="nav-content">
         <div className="nav-left">
           <div className="brand" onClick={() => onTabChange('explore')}>
-            <RiLeafLine className="brand-icon" />
-            <span className="brand-name">Green<span>Sight</span></span>
+            {/* <RiLeafLine className="brand-icon" />
+            <span className="brand-name">Green<span>Sight</span></span> */}
+           <img src={logo} alt="GreenSight Logo" style={{ height: '32px' }} />
           </div>
         </div>
 
