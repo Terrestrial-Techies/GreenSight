@@ -85,7 +85,7 @@ const MapView = ({ parks = [], selectedPark, onMarkerClick, onChatClick, onViewD
       return () => navigator.geolocation.clearWatch(watchId);
     }
   }, []);
-  
+
   // Decide which park to focus on the map (selected or user center)
   const displayPark = selectedPark;
 
@@ -112,7 +112,7 @@ const MapView = ({ parks = [], selectedPark, onMarkerClick, onChatClick, onViewD
   }, [showDirections, displayPark, userLoc]);
 
   const getConditionColor = (park) => {
-    if (!park) return '#07B60A'; 
+    if (!park) return '#07B60A';
     const condition = park.condition?.toLowerCase() || 'good';
     if (condition === 'bad') return '#FF000C';
     if (condition === 'average') return '#F99D1B';
@@ -122,9 +122,9 @@ const MapView = ({ parks = [], selectedPark, onMarkerClick, onChatClick, onViewD
   return (
     <div className="px-4">
       <div className="w-full h-[400px] bg-neutral-100 rounded-[32px] overflow-hidden relative shadow-sm border border-black/5">
-        <MapContainer 
-          center={displayPark ? [displayPark.lat, displayPark.lng] : lagosCenter} 
-          zoom={14} 
+        <MapContainer
+          center={displayPark ? [displayPark.lat, displayPark.lng] : lagosCenter}
+          zoom={14}
           className="w-full h-full z-0 font-body"
           zoomControl={false}
           attributionControl={false}
@@ -132,9 +132,9 @@ const MapView = ({ parks = [], selectedPark, onMarkerClick, onChatClick, onViewD
           <TileLayer
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
-          
-          <ChangeView 
-            center={displayPark ? [displayPark.lat, displayPark.lng] : null} 
+
+          <ChangeView
+            center={displayPark ? [displayPark.lat, displayPark.lng] : null}
             zoom={showDirections ? 13 : 18}
             bounds={route ? L.latLngBounds([userLoc, [displayPark.lat, displayPark.lng]]) : null}
           />
@@ -143,7 +143,7 @@ const MapView = ({ parks = [], selectedPark, onMarkerClick, onChatClick, onViewD
 
           {/* Render ALL Parks with their status colors */}
           {parks.map((park) => (
-            <Marker 
+            <Marker
               key={park.id}
               position={[park.lat, park.lng]}
               icon={createIcon(getConditionColor(park), park.rating || '4.8', park.name)}
@@ -154,15 +154,15 @@ const MapView = ({ parks = [], selectedPark, onMarkerClick, onChatClick, onViewD
           ))}
 
           {route && (
-            <Polyline 
-              positions={route} 
-              pathOptions={{ 
-                color: '#1792FF', 
-                weight: 5, 
+            <Polyline
+              positions={route}
+              pathOptions={{
+                color: '#1792FF',
+                weight: 5,
                 opacity: 0.8,
                 lineJoin: 'round',
                 dashArray: '1, 10'
-              }} 
+              }}
             />
           )}
         </MapContainer>
@@ -172,9 +172,9 @@ const MapView = ({ parks = [], selectedPark, onMarkerClick, onChatClick, onViewD
           <div className="absolute bottom-4 left-4 right-4 z-[1000] animate-slide-up">
             <div className="bg-white rounded-2xl p-3 shadow-xl flex gap-3 border border-black/5 backdrop-blur-md bg-white/95">
               <div className="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0 bg-neutral-50">
-                <img 
-                  src={displayPark.image || `https://images.unsplash.com/photo-1585829365291-1762f59ed290?auto=format&fit=crop&q=80&w=200`} 
-                  alt={displayPark.name} 
+                <img
+                  src={displayPark.image || `https://images.unsplash.com/photo-1585829365291-1762f59ed290?auto=format&fit=crop&q=80&w=200`}
+                  alt={displayPark.name}
                   className="w-full h-full object-cover"
                   onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1585829365291-1762f59ed290?auto=format&fit=crop&q=80&w=200'; }}
                 />
@@ -188,7 +188,7 @@ const MapView = ({ parks = [], selectedPark, onMarkerClick, onChatClick, onViewD
                   </div>
                 </div>
                 <p className="text-[11px] text-neutral-400 truncate mb-1">Nearby Green Space • Lagos</p>
-                
+
                 {/* AI Review Summary */}
                 <div className="bg-neutral-50 px-2 py-1.5 rounded-lg mb-2 border border-black/[0.03]">
                   <p className="text-[10px] text-neutral-600 line-clamp-2 italic">
@@ -197,28 +197,26 @@ const MapView = ({ parks = [], selectedPark, onMarkerClick, onChatClick, onViewD
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${
-                    displayPark.condition?.toLowerCase() === 'bad' ? 'bg-error/10 text-error' :
-                    displayPark.condition?.toLowerCase() === 'average' ? 'bg-warning/10 text-warning' :
-                    'bg-primary/10 text-primary'
-                  }`}>
+                  <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${displayPark.condition?.toLowerCase() === 'bad' ? 'bg-error/10 text-error' :
+                      displayPark.condition?.toLowerCase() === 'average' ? 'bg-warning/10 text-warning' :
+                        'bg-primary/10 text-primary'
+                    }`}>
                     {displayPark.condition || 'Good'}
                   </span>
-                  
+
                   <div className="ml-auto flex gap-2">
-                    <button 
+                    <button
                       onClick={() => handleOpenDetails(displayPark)}
-                      className="text-primary text-[11px] font-bold px-3 py-1.5 rounded-lg border border-primary/20 hover:bg-primary/5 transition-colors"
+                      className="bg-[#07B60D] text-white text-[11px] font-bold px-3 py-1.5 rounded-lg hover:bg-[#069b0b] transition-colors"
                     >
                       View Details
                     </button>
-                    <button 
+                    <button
                       onClick={() => setShowDirections(!showDirections)}
-                      className={`text-[11px] font-bold px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-all shadow-sm ${
-                        showDirections 
-                        ? 'bg-neutral-900 text-white' 
-                        : 'bg-primary text-white hover:bg-primary/90'
-                      }`}
+                      className={`text-[11px] font-bold px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-all shadow-sm ${showDirections
+                          ? 'bg-neutral-900 text-white'
+                          : 'bg-primary text-white hover:bg-primary/90'
+                        }`}
                     >
                       <RiDirectionLine size={14} />
                       {showDirections ? 'Close' : 'Directions'}
@@ -233,7 +231,7 @@ const MapView = ({ parks = [], selectedPark, onMarkerClick, onChatClick, onViewD
 
 
         {/* Floating Chat/Help Button */}
-        <button 
+        <button
           onClick={onChatClick}
           className="absolute bottom-20 right-4 w-12 h-12 bg-white text-primary rounded-full border border-black/5 flex items-center justify-center z-[1000] shadow-lg active:scale-95 transition-all hover:bg-primary hover:text-white group"
         >
@@ -242,7 +240,8 @@ const MapView = ({ parks = [], selectedPark, onMarkerClick, onChatClick, onViewD
         </button>
       </div>
 
-      <style dangerouslySetInnerHTML={{ __html: `
+      <style dangerouslySetInnerHTML={{
+        __html: `
         @keyframes markerDrop {
           from { transform: translateY(-30px); opacity: 0; }
           to { transform: translateY(0); opacity: 1; }

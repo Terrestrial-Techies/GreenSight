@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 @theme {
-  --color-primary: #1B5E20; /* Material 3 Deep Green */
+  --color-primary: #07B60D; /* Material 3 Deep Green */
   --color-on-primary: #FFFFFF;
   --color-primary-container: #C8E6C9;
   
