@@ -19,11 +19,12 @@ const supportRoutes = require("./src/routes/supportRoutes");
 const imageRoutes = require("./src/routes/imageRoutes");
 
 app.use("/auth", authRoutes);
+app.use('/community', communityRoutes);
 app.use("/parks", parkRoutes);
 app.use("/chatbot", chatbotRoutes);
 app.use("/recommendations", recommendationRoutes);
 app.use('/notifications', notificationsRoutes);
-app.use('/community', communityRoutes);
+
 app.use('/support', supportRoutes);
 app.use("/parks", imageRoutes);
 
