@@ -1,0 +1,58 @@
+.app-header-container {
+  background-color: var(--background);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.status-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 16px 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.status-icons {
+  display: flex;
+  gap: 6px;
+  font-size: 14px;
+}
+
+.app-header {
+  height: calc(var(--header-height) - 20px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+}
+
+.logo-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.logo-text {
+  font-size: 18px;
+  color: #1a1a1a;
+  letter-spacing: -0.5px;
+}
+
+.logo-text .accent {
+  color: var(--primary);
+}
+
+.profile-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1.5px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text);
+}
+

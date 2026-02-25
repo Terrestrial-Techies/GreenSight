@@ -25,6 +25,17 @@ export const parkService = {
       throw error;
     }
   },
+
+  // Fetches DB park data + Gemini-enriched fields (DB always takes priority)
+  enrichPark: async (parkId) => {
+    try {
+      const response = await api.get(`/parks/${parkId}/enrich`);
+      return response.data;
+    } catch (error) {
+      console.error('Error enriching park:', error);
+      return null; // Graceful fallback
+    }
+  },
   
   getRecommendations: async (preference) => {
     try {
@@ -55,6 +66,31 @@ export const authService = {
       console.error('Registration error:', error);
       throw error;
     }
+  }
+};
+
+export const chatbotService = {
+  sendMessage: async (message) => {
+    try {
+      const response = await api.post('/chatbot', { message });
+      return response.data.reply;
+    } catch (error) {
+      console.error('Chatbot error:', error);
+      throw error;
+    }
+  }
+};
+
+
+export const communityService = {
+  getAllReviews: async () => {
+    const response = await api.get('/community');
+    return response.data;
+  },
+
+  submitReview: async (formData) => {
+    const response = await api.post('/community', formData);
+    return response.data;
   }
 };
 

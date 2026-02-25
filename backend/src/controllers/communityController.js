@@ -4,7 +4,7 @@ const multer = require("multer");
 const upload = multer({ storage: multer.memoryStorage() });
 
 // POST: Create community review (with optional image)
-const createPost = async (req, res) => {
+const submitReview = async (req, res) => {
   try {
     const { park_id, user_id, review_text } = req.body;
 
@@ -52,7 +52,7 @@ const createPost = async (req, res) => {
 };
 
 // GET: Fetch all community posts
-const getAllPosts = async (req, res) => {
+const getAllReviews = async (req, res) => {
   try {
     const { data, error } = await supabase
       .from("reviews")
@@ -75,4 +75,4 @@ const getAllPosts = async (req, res) => {
   }
 };
 
-module.exports = { createPost, getAllPosts, upload };
+module.exports = { submitReview, getAllReviews, upload };
