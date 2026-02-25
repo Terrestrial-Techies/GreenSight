@@ -1,8 +1,11 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const { getPosts, postNew } = require('../controllers/communityController');
+const { getAllReviews, submitReview } = require("../controllers/communityController");
 
-router.get('/', getPosts);
-router.post('/', postNew);
+// Get all reviews for community page
+router.get("/", getAllReviews);
+
+// Submit a new review
+router.post("/", submitReview);
 
 module.exports = router;

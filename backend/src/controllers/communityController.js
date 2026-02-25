@@ -1,25 +1,78 @@
-const { listPosts, createPost } = require('../services/communityService');
+const supabase = require("../config/supabase");
+const multer = require("multer");
 
-const getPosts = async (req, res) => {
+const upload = multer({ storage: multer.memoryStorage() });
+
+// POST: Create community review (with optional image)
+const createPost = async (req, res) => {
   try {
-    const items = await listPosts();
-    res.json({ posts: items });
+    const { park_id, user_id, review_text } = req.body;
+
+    let imageUrl = null;
+
+    // If image uploaded
+    if (req.file) {
+      const fileName = `${Date.now()}-${req.file.originalname}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("review-images")
+        .upload(fileName, req.file.buffer, {
+          contentType: req.file.mimetype,
+        });
+
+      if (uploadError) throw uploadError;
+
+      const { data: publicUrl } = supabase.storage
+        .from("review-images")
+        .getPublicUrl(fileName);
+
+      imageUrl = publicUrl.publicUrl;
+    }
+
+    const { data, error } = await supabase
+      .from("reviews")
+      .insert([
+        {
+          park_id,
+          user_id,
+          review_text,
+          image_url: imageUrl
+        }
+      ])
+      .select();
+
+    if (error) throw error;
+
+    res.status(201).json(data[0]);
+
   } catch (err) {
-    console.error('Get community posts error:', err);
-    res.status(500).json({ error: 'Failed to load posts' });
+    console.error(err);
+    res.status(500).json({ error: "Failed to create post" });
   }
 };
 
-const postNew = async (req, res) => {
+// GET: Fetch all community posts
+const getAllPosts = async (req, res) => {
   try {
-    const { author, title, body } = req.body;
-    if (!author || !title || !body) return res.status(400).json({ error: 'author, title and body required' });
-    const created = await createPost({ author, title, body });
-    res.status(201).json({ post: created });
+    const { data, error } = await supabase
+      .from("reviews")
+      .select(`
+        id,
+        review_text,
+        image_url,
+        created_at,
+        parks(name)
+      `)
+      .order("created_at", { ascending: false });
+
+    if (error) throw error;
+
+    res.json(data);
+
   } catch (err) {
-    console.error('Create post error:', err);
-    res.status(500).json({ error: 'Failed to create post' });
+    console.error(err);
+    res.status(500).json({ error: "Failed to fetch posts" });
   }
 };
 
-module.exports = { getPosts, postNew };
+module.exports = { createPost, getAllPosts, upload };
