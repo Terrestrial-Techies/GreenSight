@@ -1,8 +1,26 @@
 const supabase = require("../config/supabase");
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+const resolveGeminiKey = () => {
+  const raw = process.env.GEMINI_API_KEY || process.env.Gemini_API_KEY || "";
+  const trimmed = raw.trim();
+  if (!trimmed) return "";
+
+  const aiKeyIndex = trimmed.indexOf("AIza");
+  if (aiKeyIndex >= 0) {
+    return trimmed.slice(aiKeyIndex);
+  }
+
+  return trimmed;
+};
+
+const getModel = () => {
+  const key = resolveGeminiKey();
+  if (!key) return null;
+  const genAI = new GoogleGenerativeAI(key);
+  const modelName = process.env.GEMINI_MODEL || "gemini-2.0-flash";
+  return genAI.getGenerativeModel({ model: modelName });
+};
 
 const chatWithGemini = async (req, res) => {
   try {
@@ -12,16 +30,28 @@ const chatWithGemini = async (req, res) => {
       return res.status(400).json({ error: "Message is required" });
     }
 
+    const model = getModel();
+    if (!model) {
+      return res.status(503).json({ error: "Gemini API key is not configured on the server" });
+    }
+
     // Fetch parks from database
     const { data: parks, error } = await supabase
       .from("parks")
-      .select("name, latitude, longitude, description");
+      .select("*");
 
-    if (error) throw error;
+    if (error) {
+      console.warn("Chatbot parks context unavailable:", error.message);
+    }
 
     // Create context for Gemini
-    const parkContext = parks
-      .map(p => `Park: ${p.name} - ${p.description || "No description available"}`)
+    const parkContext = (parks || [])
+      .slice(0, 50)
+      .map((p) => {
+        const name = p.name || p.park_name || "Unnamed Park";
+        const description = p.description || p.summary || p.details || "No description available";
+        return `Park: ${name} - ${description}`;
+      })
       .join("\n");
 
     const prompt = `
@@ -44,7 +74,18 @@ Respond in a friendly, helpful way.
 
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "Gemini chatbot failed" });
+    const status = err?.status || err?.statusCode || 500;
+    if (status === 429) {
+      return res.status(429).json({
+        error: "Gemini quota exceeded. Please enable billing or switch to another API key/project.",
+      });
+    }
+    if (status === 401 || status === 403) {
+      return res.status(status).json({
+        error: "Gemini API key is invalid or unauthorized for this project.",
+      });
+    }
+    res.status(500).json({ error: err?.message || "Gemini chatbot failed" });
   }
 };
 

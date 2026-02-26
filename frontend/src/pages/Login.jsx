@@ -22,6 +22,7 @@ const Login = () => {
       const { authService } = await import('../services/api');
       const data = await authService.login(email, password);
 <<<<<<< HEAD
+<<<<<<< HEAD
 
       // Normalize Supabase response shape (backend returns `session: data` where
       // `data` may contain `{ user, session }`). Safely extract user email and token.
@@ -39,6 +40,14 @@ const Login = () => {
         email: data.session.user.email, 
         token: data.session.access_token 
 >>>>>>> 35c36ca (new version)
+=======
+      const sessionData = data?.session || {};
+      const userData = sessionData?.user || {};
+      login({ 
+        id: userData.id,
+        email: userData.email || email,
+        token: sessionData.access_token
+>>>>>>> a6130cb (updated)
       });
       navigate('/');
     } catch (err) {

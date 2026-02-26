@@ -67,6 +67,7 @@ const MapView = ({ parks = [], selectedPark, onMarkerClick, onChatClick, onViewD
   const [userLoc, setUserLoc] = useState(lagosCenter);
   const [route, setRoute] = useState(null);
   const [showDirections, setShowDirections] = useState(false);
+  const [locationDenied, setLocationDenied] = useState(false);
 
   const handleOpenDetails = async (park) => {
     onViewDetails && onViewDetails(park);
@@ -78,9 +79,16 @@ const MapView = ({ parks = [], selectedPark, onMarkerClick, onChatClick, onViewD
       const watchId = navigator.geolocation.watchPosition(
         (position) => {
           setUserLoc([position.coords.latitude, position.coords.longitude]);
+          setLocationDenied(false);
         },
-        (error) => console.error("Error watching location:", error),
-        { enableHighAccuracy: true }
+        (error) => {
+          if (error?.code === 1) {
+            setLocationDenied(true);
+            return;
+          }
+          console.warn("Location unavailable, using default center:", error?.message || error);
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
       );
       return () => navigator.geolocation.clearWatch(watchId);
     }
@@ -205,6 +213,11 @@ const MapView = ({ parks = [], selectedPark, onMarkerClick, onChatClick, onViewD
                   </span>
 
                   <div className="ml-auto flex gap-2">
+                    {locationDenied && (
+                      <span className="text-[10px] text-warning font-semibold self-center">
+                        Location off
+                      </span>
+                    )}
                     <button
                       onClick={() => handleOpenDetails(displayPark)}
                       className="bg-[#07B60D] text-white text-[11px] font-bold px-3 py-1.5 rounded-lg hover:bg-[#069b0b] transition-colors"
