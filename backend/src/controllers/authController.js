@@ -1,5 +1,24 @@
 const { registerUser, loginUser } = require("../services/authService");
 
+/**
+ * Helper to format the response consistently
+ * This ensures the frontend always finds 'id' and 'token' in the same place.
+ */
+const formatAuthResponse = (session) => {
+  // session might vary depending on if it's from registerUser or loginUser
+  // Adjust these keys based on what your authService returns (e.g., Supabase vs JWT)
+  const user = session.user || session; 
+  const token = session.token || session.access_token || session.session?.access_token;
+
+  return {
+    token: token,
+    user: {
+      id: user.id || user.user_id,
+      email: user.email,
+    }
+  };
+};
+
 const register = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -8,11 +27,12 @@ const register = async (req, res) => {
       return res.status(400).json({ error: "Email and password required" });
     } 
 
-    const user = await registerUser(email, password);
+    const result = await registerUser(email, password);
+    const authData = formatAuthResponse(result);
 
     res.status(201).json({
       message: "User registered successfully",
-      user,
+      ...authData
     });
   } catch (error) {
     console.error('Auth register error:', error);
@@ -29,10 +49,11 @@ const login = async (req, res) => {
     }
 
     const session = await loginUser(email, password);
+    const authData = formatAuthResponse(session);
 
     res.json({
       message: "Login successful",
-      session,
+      ...authData
     });
   } catch (error) {
     console.error('Auth login error:', error);
