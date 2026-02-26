@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { RiArrowLeftLine, RiMapPin2Line, RiTimeLine, RiInformationLine, RiCheckLine, RiHeartLine, RiHeartFill, RiDirectionLine, RiShareLine, RiStarFill } from 'react-icons/ri';
 import { parkService } from '../services/api';
 import './ParkDetail.css';
@@ -7,19 +7,30 @@ import './ParkDetail.css';
 const ParkDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [park, setPark] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const location = useLocation();
+  const fallbackPark = location.state?.park;
+
+  const [park, setPark] = useState(fallbackPark || null);
+  const [loading, setLoading] = useState(!fallbackPark);
   const [isFavorite, setIsFavorite] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
 
   useEffect(() => {
     const fetchParkDetails = async () => {
       try {
-        setLoading(true);
+        if (!fallbackPark) {
+            setLoading(true);
+        }
         // Step 1: Get basic info or full enriched info
         const data = await parkService.enrichPark(id);
         if (data) {
           setPark(data);
+        } else if (!fallbackPark) {
+          const allParks = await parkService.getAllParks();
+          const found = allParks.find(p => p.id === id || p.id == id);
+          if (found) {
+            setPark(found);
+          }
         }
       } catch (err) {
         console.error('Failed to fetch park details:', err);
@@ -28,7 +39,7 @@ const ParkDetail = () => {
       }
     };
     fetchParkDetails();
-  }, [id]);
+  }, [id, fallbackPark]);
 
   if (loading) {
     return (

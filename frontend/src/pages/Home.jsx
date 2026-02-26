@@ -10,7 +10,7 @@ import ReviewModal from '../components/ReviewModal'; // Added Import
 import Reviews from './Reviews';
 import { parkService, authService } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { RiListCheck, RiFilter2Line, RiMapPin2Line, RiTimeLine, RiTreeLine, RiHeartLine, RiHeartFill, RiLeafLine, RiGroupLine, RiLogoutBoxRLine, RiLoginBoxLine, RiCloseLine, RiUserLine } from 'react-icons/ri';
 import Community from './Community';
 
@@ -29,6 +29,8 @@ const Home = () => {
   });
   const [showProfile, setShowProfile] = useState(false);
   const [showPopupChat, setShowPopupChat] = useState(false);
+  const [userLocation, setUserLocation] = useState(null);
+  const [userState, setUserState] = useState(null);
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
@@ -56,6 +58,8 @@ const Home = () => {
           lng: park.lon || park.lng || park.longitude || 3.426131,
           name: park.name || 'Green Space',
           image: park.image_url || park.image || null,
+          location: park.city || park.location || 'Unknown',
+          ai_summary: park.description || park.ai_summary || '',
           status: park.condition || 'Open',
         }));
         setParks(formattedData);
@@ -81,6 +85,60 @@ const Home = () => {
   const getParkByStatus = (status) => {
     if (status === 'All') return filteredParks;
     return filteredParks.filter(p => p.status?.toLowerCase() === status.toLowerCase());
+  };
+
+  const getDistance = (lat1, lon1, lat2, lon2) => {
+    const R = 6371; // km
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+              Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+  };
+
+  const calculateParksNearUser = () => {
+    let closestParks = [...filteredParks];
+    if (userState) {
+      const stateMatch = closestParks.filter(p => 
+        p.location?.toLowerCase().includes(userState.toLowerCase()) || 
+        p.state?.toLowerCase() === userState.toLowerCase()
+      );
+      if (stateMatch.length > 0) {
+        closestParks = stateMatch;
+      }
+    }
+    
+    if (userLocation) {
+        closestParks.sort((a, b) => {
+            const distA = getDistance(userLocation.lat, userLocation.lng, a.lat, a.lng);
+            const distB = getDistance(userLocation.lat, userLocation.lng, b.lat, b.lng);
+            return distA - distB;
+        });
+    }
+    return closestParks;
+  };
+
+  const parksNearUser = calculateParksNearUser();
+
+  const handleEnableLocation = () => {
+    navigator.geolocation.getCurrentPosition(async (position) => {
+      const { latitude, longitude } = position.coords;
+      setUserLocation({ lat: latitude, lng: longitude });
+      try {
+        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
+        const data = await res.json();
+        const state = data.address.state || data.address.city || data.address.town;
+        setUserState(state);
+      } catch (err) {
+        console.error('Error fetching location data', err);
+      }
+      setShowLocationModal(false);
+    }, (error) => {
+      console.error(error);
+      setShowLocationModal(false);
+    });
   };
 
   const renderContent = () => {
@@ -167,7 +225,7 @@ const Home = () => {
                       </div>
                       <button 
                         className="bg-primary/10 text-primary px-4 py-2 rounded-lg font-bold text-[12px] hover:bg-primary hover:text-white transition-colors"
-                        onClick={(e) => { e.stopPropagation(); navigate(`/park/${park.id}`); }}
+                        onClick={(e) => { e.stopPropagation(); navigate(`/park/${park.id}`, { state: { park } }); }}
                       >
                         Details
                       </button>
@@ -211,7 +269,7 @@ const Home = () => {
 
           <div className="flex-1">
              <NearYou 
-               parks={filteredParks} 
+               parks={parksNearUser} 
                onParkClick={(park) => { setSelectedPark(park); }} 
                desktopLayout 
              />
@@ -225,7 +283,7 @@ const Home = () => {
             selectedPark={selectedPark} 
             onMarkerClick={(park) => { setSelectedPark(park); }} 
             onChatClick={() => setShowPopupChat(true)}
-            onViewDetails={(park) => navigate(`/park/${park.id}`)}
+            onViewDetails={(park) => navigate(`/park/${park.id}`, { state: { park } })}
           />
           
           <div className="absolute bottom-24 right-6 z-[1000] lg:bottom-12">
@@ -243,7 +301,7 @@ const Home = () => {
         {/* Floating "Near You" for Mobile - Bottom Sheet Style */}
         <div className="xl:hidden p-4 bg-white border-t border-neutral-100 rounded-t-[32px] shadow-[0_-8px_20px_rgba(0,0,0,0.05)]">
            <NearYou 
-             parks={filteredParks} 
+             parks={parksNearUser} 
              onParkClick={(park) => { setSelectedPark(park); }} 
            />
         </div>
@@ -346,7 +404,7 @@ const Home = () => {
       
       {showLocationModal && (
         <LocationModal 
-          onEnable={() => setShowLocationModal(false)} 
+          onEnable={handleEnableLocation} 
           onDeny={() => setShowLocationModal(false)} 
         />
       )}

@@ -32,10 +32,10 @@ const getNearbyParks = async (req, res) => {
     const userLng = parseFloat(req.query.lng);
     const limit = parseInt(req.query.limit) || 5;
 
-    // Fetch parks
+    // Fetch parks with all fields to populate frontend (including image_url for pictures)
     const { data: parks, error } = await supabase
       .from("parks")
-      .select("id, name, latitude, longitude");
+      .select("*");
 
     if (error) throw error;
 
