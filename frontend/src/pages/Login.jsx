@@ -22,11 +22,17 @@ const Login = () => {
       const { authService } = await import('../services/api');
       const data = await authService.login(email, password);
       const sessionData = data?.session || {};
-      const userData = sessionData?.user || {};
+      const userData = sessionData?.user || sessionData?.session?.user || {};
+      const accessToken = sessionData?.access_token || sessionData?.session?.access_token || null;
+
+      if (!userData?.email || !accessToken) {
+        throw new Error('Invalid login response from server');
+      }
+
       login({ 
         id: userData.id,
-        email: userData.email || email,
-        token: sessionData.access_token
+        email: userData.email,
+        token: accessToken
       });
       navigate('/');
     } catch (err) {
