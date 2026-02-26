@@ -62,29 +62,45 @@ const ChangeView = ({ center, zoom, bounds }) => {
   return null;
 };
 
-const MapView = ({ parks = [], selectedPark, onMarkerClick, onChatClick, onViewDetails }) => {
+const MapView = ({ parks = [], selectedPark, userLocation, initialShowDirections = false, onMarkerClick, onChatClick, onViewDetails }) => {
   const lagosCenter = [6.458985, 3.426131];
-  const [userLoc, setUserLoc] = useState(lagosCenter);
+  const [userLoc, setUserLoc] = useState(userLocation ? [userLocation.lat, userLocation.lng] : lagosCenter);
   const [route, setRoute] = useState(null);
-  const [showDirections, setShowDirections] = useState(false);
+  const [showDirections, setShowDirections] = useState(initialShowDirections);
+
+  // Sync internal showDirections with prop
+  useEffect(() => {
+    if (initialShowDirections) {
+      setShowDirections(true);
+    }
+  }, [initialShowDirections]);
+
+  // Sync internal userLoc with prop
+  useEffect(() => {
+    if (userLocation) {
+        setUserLoc([userLocation.lat, userLocation.lng]);
+    }
+  }, [userLocation]);
 
   const handleOpenDetails = async (park) => {
     onViewDetails && onViewDetails(park);
   };
 
-  // Get real user location and watch for changes
+  // Get real user location and watch for changes - ONLY if we already have location or user is active
   useEffect(() => {
-    if ("geolocation" in navigator) {
+    // Only start watching if the parent has already triggered location access
+    // This prevents the permission dialog from popping up on initial page load
+    if ("geolocation" in navigator && userLocation) { 
       const watchId = navigator.geolocation.watchPosition(
         (position) => {
           setUserLoc([position.coords.latitude, position.coords.longitude]);
         },
-        (error) => console.error("Error watching location:", error),
+        (error) => console.log("Watching location..."), 
         { enableHighAccuracy: true }
       );
       return () => navigator.geolocation.clearWatch(watchId);
     }
-  }, []);
+  }, [!!userLocation]);
 
   // Decide which park to focus on the map (selected or user center)
   const displayPark = selectedPark;
@@ -173,10 +189,10 @@ const MapView = ({ parks = [], selectedPark, onMarkerClick, onChatClick, onViewD
             <div className="bg-white rounded-2xl p-3 shadow-xl flex gap-3 border border-black/5 backdrop-blur-md bg-white/95">
               <div className="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0 bg-neutral-50">
                 <img
-                  src={displayPark.image || `https://images.unsplash.com/photo-1585829365291-1762f59ed290?auto=format&fit=crop&q=80&w=200`}
+                  src={displayPark.image_url || displayPark.image || `https://images.unsplash.com/photo-1519331379826-f10be5486c6f?auto=format&fit=crop&q=80&w=200&sig=${displayPark.id}`}
                   alt={displayPark.name}
                   className="w-full h-full object-cover"
-                  onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1585829365291-1762f59ed290?auto=format&fit=crop&q=80&w=200'; }}
+                  onError={(e) => { e.target.src = `https://images.unsplash.com/photo-1519331379826-f10be5486c6f?auto=format&fit=crop&q=80&w=200&sig=${displayPark.id}`; }}
                 />
               </div>
               <div className="flex-1 min-w-0 flex flex-col justify-center">
@@ -184,10 +200,10 @@ const MapView = ({ parks = [], selectedPark, onMarkerClick, onChatClick, onViewD
                   <h3 className="font-bold text-neutral-900 truncate text-base text-xs">{displayPark.name}</h3>
                   <div className="flex items-center gap-1 bg-accent/10 px-1.5 py-0.5 rounded-md">
                     <RiStarFill className="text-accent text-[10px]" />
-                    <span className="text-[10px] font-black text-accent">4.8</span>
+                    <span className="text-[10px] font-black text-accent">{displayPark.rating || '4.5'}</span>
                   </div>
                 </div>
-                <p className="text-[11px] text-neutral-400 truncate mb-1">Nearby Green Space • Lagos</p>
+                <p className="text-[11px] text-neutral-400 truncate mb-1">Nearby Green Space • {displayPark.location || 'Nigeria'}</p>
 
                 {/* AI Review Summary */}
                 <div className="bg-neutral-50 px-2 py-1.5 rounded-lg mb-2 border border-black/[0.03]">

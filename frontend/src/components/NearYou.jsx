@@ -13,7 +13,7 @@ const NearYou = ({ parks, onParkClick, desktopLayout }) => {
             onClick={() => onParkClick(park)}
           >
             <img 
-              src={park.image || `https://images.unsplash.com/photo-1585829365291-1762f59ed290?auto=format&fit=crop&q=80&w=200`} 
+              src={park.image || `https://images.unsplash.com/photo-1519331379826-f10be5486c6f?auto=format&fit=crop&q=80&w=300&sig=${park.id}`} 
               alt={park.name} 
               className="park-preview-image"
             />

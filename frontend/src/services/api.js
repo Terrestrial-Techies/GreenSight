@@ -45,6 +45,18 @@ export const parkService = {
       console.error('Error fetching recommendations:', error);
       throw error;
     }
+  },
+
+  getNearbyParks: async (lat, lng, limit = 10) => {
+    try {
+      const response = await api.get('/parks/nearby', {
+        params: { lat, lng, limit }
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching nearby parks:', error);
+      throw error;
+    }
   }
 };
 
