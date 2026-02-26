@@ -16,7 +16,8 @@ const Home = () => {
 
   // Fallback / Enhancement data (since backend is missing some fields for now)
   const enhanceParkData = (backendParks) => {
-    return backendParks.map(park => ({
+    return backendParks.map((park, index) => ({
+      id: park.id || `${park.name || 'park'}-${park.latitude || park.lat || 'lat'}-${park.longitude || park.lng || 'lng'}-${index}`,
       lat: park.latitude || park.lat || 6.5244,
       lng: park.longitude || park.lng || 3.3792,
       name: park.name || "Unnamed Park",
