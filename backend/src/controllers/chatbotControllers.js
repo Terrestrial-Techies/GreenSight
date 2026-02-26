@@ -22,17 +22,31 @@ const getModel = () => {
   return genAI.getGenerativeModel({ model: modelName });
 };
 
+const buildFallbackReply = (message, parks = []) => {
+  const text = (message || "").toLowerCase();
+  const topParks = parks
+    .slice(0, 3)
+    .map((p) => p.name || p.park_name)
+    .filter(Boolean);
+
+  if (text.includes("near") || text.includes("closest")) {
+    return "I can still help while AI is limited. Share your area in Lagos and I will suggest the closest green spaces.";
+  }
+  if (text.includes("open") || text.includes("time") || text.includes("hours")) {
+    return "I cannot verify live opening hours right now. Please check park details in-app and community updates before visiting.";
+  }
+  if (topParks.length) {
+    return `AI is temporarily limited, but you can start with: ${topParks.join(", ")}. Ask for a specific area and I will narrow it down.`;
+  }
+  return "AI is temporarily limited, but I can still help. Ask for nearby parks, quieter spots, or family-friendly options.";
+};
+
 const chatWithGemini = async (req, res) => {
   try {
     const { message } = req.body;
 
     if (!message) {
       return res.status(400).json({ error: "Message is required" });
-    }
-
-    const model = getModel();
-    if (!model) {
-      return res.status(503).json({ error: "Gemini API key is not configured on the server" });
     }
 
     // Fetch parks from database
@@ -53,6 +67,15 @@ const chatWithGemini = async (req, res) => {
         return `Park: ${name} - ${description}`;
       })
       .join("\n");
+
+    const model = getModel();
+    if (!model) {
+      return res.json({
+        reply: buildFallbackReply(message, parks || []),
+        degraded: true,
+        reason: "missing_gemini_key",
+      });
+    }
 
     const prompt = `
 You are a helpful assistant for a park discovery app called GreenSight.
@@ -76,16 +99,24 @@ Respond in a friendly, helpful way.
     console.error(err);
     const status = err?.status || err?.statusCode || 500;
     if (status === 429) {
-      return res.status(429).json({
-        error: "Gemini quota exceeded. Please enable billing or switch to another API key/project.",
+      return res.json({
+        reply: "Gemini quota is currently exceeded. I can still help with basic park suggestions if you tell me your area.",
+        degraded: true,
+        reason: "quota_exceeded",
       });
     }
     if (status === 401 || status === 403) {
-      return res.status(status).json({
-        error: "Gemini API key is invalid or unauthorized for this project.",
+      return res.json({
+        reply: "AI provider authorization is currently unavailable. I can still suggest parks based on available listings.",
+        degraded: true,
+        reason: "auth_error",
       });
     }
-    res.status(500).json({ error: err?.message || "Gemini chatbot failed" });
+    return res.json({
+      reply: "AI is temporarily unavailable, but I can still help with basic park guidance. Ask for nearby or quieter spots.",
+      degraded: true,
+      reason: "unknown_error",
+    });
   }
 };
 

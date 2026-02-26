@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 const { getAllParks } = require("../controllers/parkController.js");
 const verifyToken = require("../middleware/authmiddleware");
@@ -18,6 +19,9 @@ module.exports = router;
 
 =======
 const { getAllParks, getNearbyParks } = require("../controllers/parkControllers");
+=======
+const { getAllParks, getNearbyParks } = require("../controllers/parkController");
+>>>>>>> c7bc01c (update)
 
 router.get("/", getAllParks);
 router.get("/nearby", getNearbyParks);

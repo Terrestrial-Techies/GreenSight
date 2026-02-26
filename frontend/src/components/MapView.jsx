@@ -177,8 +177,12 @@ const MapView = ({ parks = [], selectedPark, onMarkerClick, onChatClick, onViewD
 
         {/* Floating Detail Card - Google Maps Style */}
         {displayPark && (
-          <div className="absolute bottom-4 left-4 right-4 z-[3000] animate-slide-up pointer-events-none">
-            <div className="bg-white rounded-2xl p-3 shadow-xl flex gap-3 border border-black/5 backdrop-blur-md bg-white/95 pointer-events-auto">
+          <div className="absolute bottom-4 left-4 right-4 z-[3000] animate-slide-up">
+            <div
+              className="bg-white rounded-2xl p-3 shadow-xl flex gap-3 border border-black/5 backdrop-blur-md bg-white/95"
+              onMouseDown={(e) => e.stopPropagation()}
+              onTouchStart={(e) => e.stopPropagation()}
+            >
               <div className="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0 bg-neutral-50">
                 <img
                   src={displayPark.image || `https://images.unsplash.com/photo-1585829365291-1762f59ed290?auto=format&fit=crop&q=80&w=200`}
@@ -225,6 +229,8 @@ const MapView = ({ parks = [], selectedPark, onMarkerClick, onChatClick, onViewD
                         e.stopPropagation();
                         handleOpenDetails(displayPark);
                       }}
+                      onMouseDown={(e) => e.stopPropagation()}
+                      onTouchStart={(e) => e.stopPropagation()}
                       className="bg-[#07B60D] text-white text-[11px] font-bold px-3 py-1.5 rounded-lg hover:bg-[#069b0b] transition-colors"
                     >
                       View Details
@@ -236,6 +242,8 @@ const MapView = ({ parks = [], selectedPark, onMarkerClick, onChatClick, onViewD
                         e.stopPropagation();
                         setShowDirections(!showDirections);
                       }}
+                      onMouseDown={(e) => e.stopPropagation()}
+                      onTouchStart={(e) => e.stopPropagation()}
                       className={`text-[11px] font-bold px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-all shadow-sm ${showDirections
                           ? 'bg-neutral-900 text-white'
                           : 'bg-primary text-white hover:bg-primary/90'
