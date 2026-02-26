@@ -29,7 +29,7 @@ const Chatbot = ({ onClose, isFullPage = false }) => {
     setIsTyping(true);
 
     try {
-      const reply = await chatbotService.sendMessage(userMessage);
+      const reply = await chatbotService.sendMessage(userMessage, messages);
       setMessages(prev => [...prev, { role: 'assistant', content: reply }]);
     } catch (err) {
       console.error('Chat error:', err);

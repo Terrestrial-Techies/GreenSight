@@ -43,13 +43,13 @@ const buildFallbackReply = (message, parks = []) => {
 
 const chatWithGemini = async (req, res) => {
   try {
-    const { message } = req.body;
+    const { message, history = [] } = req.body;
 
     if (!message) {
       return res.status(400).json({ error: "Message is required" });
     }
 
-    // Fetch parks from database
+    // Fetch parks from database for context
     const { data: parks, error } = await supabase
       .from("parks")
       .select("*");
@@ -64,7 +64,9 @@ const chatWithGemini = async (req, res) => {
       .map((p) => {
         const name = p.name || p.park_name || "Unnamed Park";
         const description = p.description || p.summary || p.details || "No description available";
-        return `Park: ${name} - ${description}`;
+        const location = p.location || p.address || "Lagos";
+        const condition = p.condition || "Good";
+        return `- ${name}: ${description} (Location: ${location}, Condition: ${condition})`;
       })
       .join("\n");
 
@@ -77,19 +79,39 @@ const chatWithGemini = async (req, res) => {
       });
     }
 
-    const prompt = `
-You are a helpful assistant for a park discovery app called GreenSight.
+    // Format history for Gemini SDK (user/model)
+    const formattedHistory = history.map(msg => ({
+      role: msg.role === 'assistant' ? 'model' : 'user',
+      parts: [{ text: msg.content }]
+    }));
 
-Here are available parks:
+    const chat = model.startChat({
+      history: formattedHistory,
+      generationConfig: {
+        maxOutputTokens: 500,
+      },
+    });
+
+    const systemPromptMessage = `
+You are "Greenie", the friendly and expert AI guide for GreenSight, an app dedicated to discovering and preserving urban green spaces in Lagos, Nigeria.
+
+YOUR GOAL: Help users find, explore, and appreciate parks, gardens, and nature spots in Lagos.
+
+CONTEXT OF AVAILABLE PARKS:
 ${parkContext}
 
-User question:
-${message}
+GUIDELINES:
+1. ALWAYS be friendly, helpful, and passionate about nature and Lagos.
+2. If the user asks for a recommendation, use the context above to suggest specific parks.
+3. If they ask about conditions or amenities, refer to the context. If data is missing, suggest they check the "View Details" section in the app or look for community reports.
+4. Encourage sustainable practices and community reporting.
+5. If asked something unrelated to green spaces or Lagos, gently guide them back to your specialty.
+6. Keep responses concise but informative.
 
-Respond in a friendly, helpful way.
+Current User Input: ${message}
 `;
 
-    const result = await model.generateContent(prompt);
+    const result = await chat.sendMessage(systemPromptMessage);
     const response = await result.response;
     const text = response.text();
 

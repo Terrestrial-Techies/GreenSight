@@ -36,7 +36,7 @@ export const parkService = {
       return null; // Graceful fallback
     }
   },
-  
+
   getRecommendations: async (preference) => {
     try {
       const response = await api.post('/recommendations', { preference });
@@ -70,9 +70,9 @@ export const authService = {
 };
 
 export const chatbotService = {
-  sendMessage: async (message) => {
+  sendMessage: async (message, history = []) => {
     try {
-      const response = await api.post('/chatbot', { message });
+      const response = await api.post('/chatbot', { message, history });
       return response.data.reply;
     } catch (error) {
       console.error('Chatbot error:', error);

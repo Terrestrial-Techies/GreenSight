@@ -1,4 +1,5 @@
 const supabase = require("../config/supabase");
+const imageService = require("../services/imageService");
 
 // Fetch all parks
 const getAllParks = async (req, res) => {
@@ -66,4 +67,55 @@ const getNearbyParks = async (req, res) => {
   }
 };
 
-module.exports = { getAllParks, getNearbyParks };
+// NEW: Enrich park with images and AI data
+const enrichPark = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // 1. Fetch park from DB
+    const { data: park, error } = await supabase
+      .from("parks")
+      .select("*")
+      .eq("id", id)
+      .single();
+
+    if (error || !park) {
+      return res.status(404).json({ error: "Park not found" });
+    }
+
+    // 2. Fetch images
+    let images = [];
+    try {
+      images = await imageService.getImagesForPark(id, park);
+    } catch (imgErr) {
+      console.error("Image service error:", imgErr);
+    }
+
+    // 3. Format result
+    const enrichedPark = {
+      ...park,
+      image: park.image_url || park.image || (images[0] ? images[0].url : null),
+      gallery: images.map(img => img.url),
+      // Fallbacks for frontend expectations
+      ai_summary: park.ai_summary || park.description || "A beautiful green space in the heart of the city, offering a peaceful retreat for nature lovers.",
+      facilities: park.facilities || [
+        { name: "Walking Paths", available: true },
+        { name: "Seating", available: true },
+        { name: "Greenery", available: true },
+        { name: "Security", available: true }
+      ],
+      crowd_level: park.crowd_level || park.condition || "Moderate",
+      cleanliness: park.cleanliness || "Excellent",
+      safety_perception: park.safety_perception || "High",
+      pricing: park.pricing || "Free Access",
+      address: park.address || park.location || "Lagos, Nigeria"
+    };
+
+    res.json(enrichedPark);
+  } catch (err) {
+    console.error("Enrichment error:", err);
+    res.status(500).json({ error: "Failed to enrich park data" });
+  }
+};
+
+module.exports = { getAllParks, getNearbyParks, enrichPark };
