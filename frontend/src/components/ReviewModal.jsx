@@ -11,6 +11,20 @@ const ReviewModal = ({ isOpen, onClose, parks, user }) => {
   const [loading, setLoading] = useState(false);
   const [preview, setPreview] = useState(null);
 
+  const getUserId = () => {
+    const directId = user?.user?.id || user?.id || user?.user?.user_id || user?.user_id;
+    if (directId) return directId;
+
+    try {
+      const token = user?.token;
+      if (!token) return null;
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      return payload?.sub || payload?.user_id || null;
+    } catch {
+      return null;
+    }
+  };
+
   // Clear form when modal opens/closes
   useEffect(() => {
     if (!isOpen) {
@@ -39,7 +53,7 @@ const ReviewModal = ({ isOpen, onClose, parks, user }) => {
      * If user object is { token: '...', user: { id: 1 } }, we need user.user.id
      * If user object is just { id: 1 }, we use user.id
      */
-    const userId = user.user?.id || user.id || user.user?.user_id || user.user_id;
+    const userId = getUserId();
 
     if (!userId) {
       console.error("Auth Debug - User Object:", user);

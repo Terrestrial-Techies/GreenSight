@@ -9,10 +9,18 @@ const normalizeReview = (row = {}) => ({
   created_at: row.created_at || row.createdAt || row.updated_at || new Date().toISOString(),
 });
 
+const hasMissingColumnError = (error) => {
+  const msg = (error?.message || "").toLowerCase();
+  return error?.code === "42703" || msg.includes("column") && msg.includes("does not exist");
+};
+
 // POST: Create community review (with optional image)
 const submitReview = async (req, res) => {
   try {
     const { park_id, user_id, review_text } = req.body;
+    if (!park_id || !user_id || !review_text) {
+      return res.status(400).json({ error: "park_id, user_id and review_text are required" });
+    }
 
     let imageUrl = null;
 
@@ -35,21 +43,39 @@ const submitReview = async (req, res) => {
       imageUrl = publicUrl.publicUrl;
     }
 
-    const { data, error } = await supabase
-      .from("reviews")
-      .insert([
-        {
-          park_id,
-          user_id,
-          review_text,
-          image_url: imageUrl
-        }
-      ])
-      .select();
+    const basePayload = {
+      park_id,
+      user_id,
+      image_url: imageUrl,
+    };
 
-    if (error) throw error;
+    const textVariants = ["review_text", "text", "content", "message"];
+    let insertResult = null;
+    let lastError = null;
 
-    res.status(201).json(data[0]);
+    for (const field of textVariants) {
+      const payload = { ...basePayload, [field]: review_text };
+      const { data, error } = await supabase
+        .from("reviews")
+        .insert([payload])
+        .select();
+
+      if (!error) {
+        insertResult = data?.[0] || payload;
+        break;
+      }
+
+      lastError = error;
+      if (!hasMissingColumnError(error)) {
+        throw error;
+      }
+    }
+
+    if (!insertResult) {
+      throw lastError || new Error("Failed to create post");
+    }
+
+    res.status(201).json(normalizeReview(insertResult));
 
   } catch (err) {
     console.error(err);
