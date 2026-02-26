@@ -13,7 +13,7 @@ const Login = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  const handleSubmit = async (e) => {
+const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setLoading(true);
@@ -21,13 +21,21 @@ const Login = () => {
     try {
       const { authService } = await import('../services/api');
       const data = await authService.login(email, password);
-      login({ 
-        email: data.session.user.email, 
-        token: data.session.access_token 
+
+      // FIX: Access 'data.user' and 'data.token' directly
+      // instead of 'data.session'
+      login({
+        id: data.user.id,
+        email: data.user.email,
+        token: data.token
       });
+
       navigate('/');
     } catch (err) {
+      // This catch was triggering because of the code error above, 
+      // not just because of a bad password!
       setError(err.response?.data?.error || 'Login failed. Please check your credentials.');
+      console.error("Login Client Error:", err);
     } finally {
       setLoading(false);
     }
@@ -37,22 +45,22 @@ const Login = () => {
     <div className="m3-auth-page">
       <div className="auth-visual-side login-bg">
         <Link to="/" className="brand-header hover:scale-105 transition-transform">
-           <RiLeafLine size={32} className="text-white" />
-           <span className="text-2xl font-bold text-white tracking-wide">GreenSight</span>
-           <span className="ml-auto text-xs bg-white/20 px-3 py-1 rounded-full backdrop-blur-md">BACK TO EXPLORE</span>
+          <RiLeafLine size={32} className="text-white" />
+          <span className="text-2xl font-bold text-white tracking-wide">GreenSight</span>
+          <span className="ml-auto text-xs bg-white/20 px-3 py-1 rounded-full backdrop-blur-md">BACK TO EXPLORE</span>
         </Link>
         <div className="visual-content">
           <h1>Welcome back.</h1>
           <p>Sign in to continue your journey through Lagos' verified urban green spaces.</p>
-          
+
           {/* Mock Profile Preview */}
           <div className="mock-profile-card mt-12 p-6 bg-white/10 backdrop-blur-xl rounded-3xl border border-white/20 max-w-sm">
             <div className="flex items-center gap-4 mb-4">
-               <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center text-primary font-bold">TJ</div>
-               <div>
-                 <p className="font-bold">Tunde Johnson</p>
-                 <p className="text-xs text-white/50">Verified Explorer</p>
-               </div>
+              <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center text-primary font-bold">TJ</div>
+              <div>
+                <p className="font-bold">Tunde Johnson</p>
+                <p className="text-xs text-white/50">Verified Explorer</p>
+              </div>
             </div>
             <div className="space-y-3">
               <div className="h-2 bg-white/20 rounded-full w-full"></div>
@@ -73,9 +81,9 @@ const Login = () => {
       <div className="auth-form-side">
         <div className="form-container animate-fade-in">
           <div className="mobile-only-logo">
-             <RiLeafLine size={40} className="text-primary" />
+            <RiLeafLine size={40} className="text-primary" />
           </div>
-          
+
           <div className="form-header">
             <h2>Sign In</h2>
             <p>Access your favorites and latest park reports.</p>
@@ -88,12 +96,12 @@ const Login = () => {
               <label>Work Email</label>
               <div className="input-wrapper">
                 <RiMailLine className="icon" />
-                <input 
-                  type="email" 
-                  placeholder="name@company.com" 
+                <input
+                  type="email"
+                  placeholder="name@company.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  required 
+                  required
                 />
               </div>
             </div>
@@ -102,15 +110,15 @@ const Login = () => {
               <label>Password</label>
               <div className="input-wrapper">
                 <RiLockPasswordLine className="icon" />
-                <input 
-                  type={showPassword ? "text" : "password"} 
-                  placeholder="Enter your password" 
+                <input
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Enter your password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  required 
+                  required
                 />
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   className="password-toggle-btn"
                   onClick={() => setShowPassword(!showPassword)}
                 >
