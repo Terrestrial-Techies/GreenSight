@@ -42,12 +42,23 @@ const Login = () => {
 >>>>>>> 35c36ca (new version)
 =======
       const sessionData = data?.session || {};
-      const userData = sessionData?.user || {};
+      const userData = sessionData?.user || sessionData?.session?.user || {};
+      const accessToken = sessionData?.access_token || sessionData?.session?.access_token || null;
+
+      if (!userData?.email || !accessToken) {
+        throw new Error('Invalid login response from server');
+      }
+
       login({ 
         id: userData.id,
+<<<<<<< HEAD
         email: userData.email || email,
         token: sessionData.access_token
 >>>>>>> a6130cb (updated)
+=======
+        email: userData.email,
+        token: accessToken
+>>>>>>> 910baa8 (add)
       });
       navigate('/');
     } catch (err) {
