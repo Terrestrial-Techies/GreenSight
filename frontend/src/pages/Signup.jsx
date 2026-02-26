@@ -26,7 +26,7 @@ const Signup = () => {
         navigate('/login', { state: { message: `Welcome ${name}! Your account is ready. Please sign in to continue.` } });
       }
     } catch (err) {
-      setError(err.message || 'Signup failed. Please check your details.');
+      setError(err.response?.data?.error || err.message || 'Signup failed. Please check your details.');
     } finally {
       setLoading(false);
     }

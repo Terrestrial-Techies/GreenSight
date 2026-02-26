@@ -23,6 +23,7 @@ const Login = () => {
       const data = await authService.login(email, password);
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 
       // Normalize Supabase response shape (backend returns `session: data` where
       // `data` may contain `{ user, session }`). Safely extract user email and token.
@@ -44,6 +45,10 @@ const Login = () => {
       const sessionData = data?.session || {};
       const userData = sessionData?.user || sessionData?.session?.user || {};
       const accessToken = sessionData?.access_token || sessionData?.session?.access_token || null;
+=======
+      const userData = data?.user || data?.session?.user || data?.session?.session?.user || {};
+      const accessToken = data?.token || data?.session?.access_token || data?.session?.session?.access_token || null;
+>>>>>>> 585eb1b (upated)
 
       if (!userData?.email || !accessToken) {
         throw new Error('Invalid login response from server');
@@ -62,7 +67,7 @@ const Login = () => {
       });
       navigate('/');
     } catch (err) {
-      setError(err.response?.data?.error || 'Login failed. Please check your credentials.');
+      setError(err.response?.data?.error || err.message || 'Login failed. Please check your credentials.');
     } finally {
       setLoading(false);
     }
