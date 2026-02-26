@@ -1,9 +1,7 @@
-// src/routes/parkRoutes.js
 const express = require("express");
 const router = express.Router();
-const { getAllParks, getNearbyParks } = require("../controllers/parkControllers");
+const { chatWithGemini } = require("../controllers/chatbotControllers");
 
-router.get("/", getAllParks);
-router.get("/nearby", getNearbyParks);
+router.post("/", chatWithGemini);
 
 module.exports = router;

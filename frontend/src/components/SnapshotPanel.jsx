@@ -1,126 +1,148 @@
 import React, { useState } from 'react';
-import { RiCloseLine, RiShareLine, RiNavigationFill, RiTimeLine, RiInformationFill } from 'react-icons/ri';
+import { RiCloseLine, RiDirectionLine, RiBookmarkLine, RiInformationLine, RiCheckLine, RiHeartLine, RiHeartFill } from 'react-icons/ri';
 import './SnapshotPanel.css';
 import ReportModal from './ReportModal';
 
-const SnapshotPanel = ({ park, onClose }) => {
-  const [isLocating, setIsLocating] = useState(false);
-  const [showReportModal, setShowReportModal] = useState(false);
+const SnapshotPanel = ({ park, onClose, onToggleFavorite, isFavorite }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
 
   if (!park) return null;
 
-  const handleGetDirections = () => {
-    setIsLocating(true);
-
-    if ("geolocation" in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const { latitude: userLat, longitude: userLng } = position.coords;
-          
-          const directionsUrl = `https://www.google.com/maps/dir/?api=1&origin=${userLat},${userLng}&destination=${park.lat},${park.lng}&travelmode=driving`;
-          
-          window.open(directionsUrl, '_blank');
-          setIsLocating(false);
-        },
-        (error) => {
-          console.error("Geolocation Error:", error);
-          setIsLocating(false);
-
-          const fallbackUrl = `https://www.google.com/maps/search/?api=1&query=${park.lat},${park.lng}`;
-          window.open(fallbackUrl, '_blank');
-          alert("Unable to find your location. Opening the park's location instead.");
-        },
-        { enableHighAccuracy: true, timeout: 5000 } 
-      );
-    } else {
-      setIsLocating(false);
-      alert("Geolocation is not supported by your browser.");
-    }
+  const getConditionColor = (val) => {
+    if (val?.toLowerCase() === 'fair' || val?.toLowerCase() === 'average') return 'orange';
+    if (val?.toLowerCase() === 'bad' || val?.toLowerCase() === 'poor') return 'red';
+    return '#07B60A';
   };
 
-  const getStatusLabel = (status) => {
-    switch (status) {
-      case 'Operational': return { text: 'Operational', class: 'status-green' };
-      case 'Maintenance': return { text: 'Under Maintenance', class: 'status-yellow' };
-      case 'Closed': return { text: 'Temporarily Closed', class: 'status-red' };
-      default: return { text: 'Status Unknown', class: 'status-gray' };
-    }
-  };
+  const operationalCount = (park.features || []).filter(f => f.status === 'Operational').length;
+  const totalFeatures = (park.features || []).length;
 
   return (
-    <div className="snapshot-panel glass-morphism">
+    <div className={`snapshot-panel ${isExpanded ? 'expanded' : 'compact'}`}>
+      {/* Header */}
       <div className="snapshot-header">
-        <button onClick={onClose} className="close-btn" aria-label="Close panel">
+        <div className="park-info">
+          <h2>{park.name}</h2>
+          <p>{park.address || park.location || 'NO 15, Gbadamosi Layout, Gbagada, Lagos'}</p>
+        </div>
+        <button onClick={onClose} className="close-btn">
           <RiCloseLine size={24} />
         </button>
-        <div className="header-actions">
-          <button className="icon-btn" title="Share this space"><RiShareLine /></button>
-        </div>
       </div>
 
-      <div className="snapshot-content">
-        <div className="title-section">
-          <span className={`access-tag ${park.access?.toLowerCase() || 'public'}`}>
-            {park.access || 'Public'} {park.price && `• ${park.price}`}
-          </span>
-          <h1>{park.name}</h1>
-          <p className="location-text">{park.location}</p>
+      <div className="snapshot-scroll-container content-scroll">
+        {/* Status Ring Section */}
+        <div className="status-section">
+          <div className="status-ring" style={{ background: `conic-gradient(${getConditionColor(park.condition)} 0deg 280deg, #f2f4f7 280deg 360deg)` }}>
+            <div className="inner-white"></div>
+          </div>
+          <div className="status-label">
+            <div className="label">Status</div>
+            <div className="value" style={{ color: getConditionColor(park.condition) }}>
+              {park.condition?.toLowerCase() === 'good' ? 'Excellent' : (park.condition || 'Excellent')}
+            </div>
+          </div>
         </div>
 
-        <div className="ai-summary-box">
-          <div className="summary-header">
-            <RiInformationFill className="ai-icon" />
-            <span>AI Snapshot Summary</span>
+        {/* Key Features */}
+        <div className="features-section">
+          <h3>Key Features</h3>
+          <div className="feature-list">
+            {(park.key_features || ['Garden', 'Quiet Zone', 'Pet-Friendly']).map((feature, i) => (
+              <div key={i} className="feature-item">{feature}</div>
+            ))}
           </div>
-          <p>
-            {park.description} Currently, <strong>
-              {(park.features || []).filter(f => f.status === 'Operational').length}/{(park.features || []).length}
-            </strong> tracked infrastructures are operational. Best time to visit for a quiet experience is usually early mornings.
-          </p>
         </div>
 
-        <div className="infrastructure-section">
-          <div className="section-header">
-            <h3>Infrastructure Availability</h3>
-            <span className="last-sync"><RiTimeLine /> {park.lastUpdated}</span>
+        {!isExpanded ? (
+          <div className="compact-footer-action">
+            <button className="view-full-btn" onClick={() => setIsExpanded(true)}>
+              View Full Snapshot
+            </button>
           </div>
-          
-          <div className="feature-status-list">
-            {(park.features || []).map((feature, idx) => {
-              const status = getStatusLabel(feature.status);
-              return (
-                <div key={idx} className="status-row">
-                  <span className="feature-name">{feature.name}</span>
-                  <div className="status-indicator">
-                    <span className={`status-text ${status.class}`}>{status.text}</span>
-                    <span className={`status-pill ${status.class}`}></span>
+        ) : (
+          <div className="expanded-content animate-fade-in">
+             {/* AI Snapshot Summary */}
+            <div className="section-block ai-summary-section">
+              <h3>AI Snapshot Summary</h3>
+              <div className="ai-bubble">
+                <p>{park.ai_summary || "This space is perfect for quiet relaxation, featuring well-maintained paths and plenty of seating. It's currently in excellent condition and ideal for urban escape."}</p>
+              </div>
+            </div>
+
+             <div className="divider"></div>
+            
+            {/* Real Time Conditions */}
+            <div className="section-block">
+              <h3>Real Time Conditions</h3>
+              <div className="condition-row">
+                <span>Crowd Level</span>
+                <div className="status-indicator-ring" style={{ borderColor: getConditionColor(park.crowd_level) }}></div>
+              </div>
+              <div className="condition-row">
+                <span>Cleanliness: <i>{park.cleanliness || 'Fair'}</i></span>
+                <div className="status-indicator-ring" style={{ borderColor: getConditionColor(park.cleanliness) }}></div>
+              </div>
+              <div className="condition-row">
+                <span>Safety Perception</span>
+                <div className="status-indicator-ring" style={{ borderColor: getConditionColor(park.safety_perception) }}></div>
+              </div>
+              <span className="timestamp">Timestamp <span className="time-val">2 mins ago</span></span>
+            </div>
+
+            <div className="divider"></div>
+
+            {/* Facility Checklist */}
+            <div className="section-block">
+              <h3>Facility Checklist</h3>
+              <div className="checklist-grid">
+                {(park.facilities || [
+                  { name: 'Seating', available: true },
+                  { name: 'Walking Paths', available: true },
+                  { name: 'Children\'s Play Area', available: false },
+                  { name: 'Security', available: true }
+                ]).map((f, i) => (
+                  <div key={i} className="checklist-item">
+                    <div className={`checkbox ${f.available ? 'checked' : ''}`}>
+                      {f.available ? <RiCheckLine size={14} /> : null}
+                    </div>
+                    <span>{f.name}</span>
                   </div>
-                </div>
-              );
-            })}
-            {(!park.features || park.features.length === 0) && (
-              <p className="no-features">No feature details available.</p>
-            )}
-          </div>
-        </div>
+                ))}
+              </div>
+            </div>
 
-        <div className="action-footer">
-          <button 
-            className="btn-primary full-width" 
-            onClick={handleGetDirections}
-            disabled={isLocating}
-          >
-            <RiNavigationFill /> 
-            {isLocating ? "Locating User..." : "Get Directions"}
-          </button>
-          
-          <button 
-            className="btn-secondary full-width"
-            onClick={() => setShowReportModal(true)}
-          >
-            Report Current Condition
-          </button>
-        </div>
+            {/* Gallery */}
+            <div className="section-block">
+              <h3>Gallery</h3>
+              <div className="gallery-grid">
+                {(park.gallery || [
+                  "https://images.unsplash.com/photo-1585829365291-1762f59ed290?auto=format&fit=crop&q=80&w=200",
+                  "https://images.unsplash.com/photo-1596438459194-f275f413d6ff?auto=format&fit=crop&q=80&w=200",
+                  "https://images.unsplash.com/photo-1567080597717-adc73369d19a?auto=format&fit=crop&q=80&w=200",
+                  "https://images.unsplash.com/photo-1588880331179-bc9b93a8ec5e?auto=format&fit=crop&q=80&w=200"
+                ]).map((img, i) => (
+                  <img key={i} src={img} alt={`park ${i + 1}`} />
+                ))}
+              </div>
+            </div>
+
+            {/* Footer Buttons */}
+            <div className="expanded-footer">
+              <button className="btn-get-directions flex-1 py-3 bg-primary text-white rounded-xl font-bold flex items-center justify-center gap-2">
+                <RiDirectionLine size={20} />
+                Get Directions
+              </button>
+              <button 
+                className={`btn-save-fav p-3 rounded-xl border transition-all ${isFavorite ? 'bg-primary/10 border-primary/20 text-primary' : 'bg-white border-neutral-200 text-neutral-400 hover:text-primary hover:border-primary/20'}`}
+                onClick={() => onToggleFavorite(park)}
+                title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+              >
+                {isFavorite ? <RiHeartFill size={24} /> : <RiHeartLine size={24} />}
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {showReportModal && (
@@ -130,6 +152,7 @@ const SnapshotPanel = ({ park, onClose }) => {
           onSubmit={(data) => {
             console.log("New User Report for Lagos Green Space:", data);
             alert(`Report logged: ${park.name} is currently flagged as ${data.safety}.`);
+            setShowReportModal(false);
           }}
         />
       )}
