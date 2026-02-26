@@ -21,9 +21,12 @@ const Login = () => {
     try {
       const { authService } = await import('../services/api');
       const data = await authService.login(email, password);
+      const sessionData = data?.session || {};
+      const userData = sessionData?.user || {};
       login({ 
-        email: data.session.user.email, 
-        token: data.session.access_token 
+        id: userData.id,
+        email: userData.email || email,
+        token: sessionData.access_token
       });
       navigate('/');
     } catch (err) {

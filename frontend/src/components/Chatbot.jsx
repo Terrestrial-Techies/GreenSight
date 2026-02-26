@@ -33,7 +33,11 @@ const Chatbot = ({ onClose, isFullPage = false }) => {
       setMessages(prev => [...prev, { role: 'assistant', content: reply }]);
     } catch (err) {
       console.error('Chat error:', err);
-      setMessages(prev => [...prev, { role: 'assistant', content: "Sorry, I'm having trouble connecting right now. Please try again in a bit!" }]);
+      const backendMessage = err?.response?.data?.error;
+      setMessages(prev => [...prev, {
+        role: 'assistant',
+        content: backendMessage || "Sorry, I'm having trouble connecting right now. Please try again in a bit!",
+      }]);
     } finally {
       setIsTyping(false);
     }
