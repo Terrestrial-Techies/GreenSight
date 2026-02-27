@@ -70,9 +70,9 @@ export const authService = {
 };
 
 export const chatbotService = {
-  sendMessage: async (message, history = []) => {
+  sendMessage: async (message) => {
     try {
-      const response = await api.post('/chatbot', { message, history });
+      const response = await api.post('/chatbot', { message });
       return response.data.reply;
     } catch (error) {
       console.error('Chatbot error:', error);

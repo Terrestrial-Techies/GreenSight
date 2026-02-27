@@ -6,12 +6,20 @@ import NearYou from '../components/NearYou';
 import BottomNav from '../components/BottomNav';
 import Chatbot from '../components/Chatbot';
 import LocationModal from '../components/LocationModal';
-import ReviewModal from '../components/ReviewModal'; // Added Import
-import Reviews from './Reviews';
-import { parkService, authService } from '../services/api';
+import ReviewModal from '../components/ReviewModal';
+import { parkService } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
-import { RiListCheck, RiFilter2Line, RiMapPin2Line, RiTimeLine, RiTreeLine, RiHeartLine, RiHeartFill, RiLeafLine, RiGroupLine, RiLogoutBoxRLine, RiLoginBoxLine, RiCloseLine, RiUserLine } from 'react-icons/ri';
+import { 
+  RiMapPin2Line, 
+  RiTimeLine, 
+  RiHeartFill, 
+  RiLogoutBoxRLine, 
+  RiLoginBoxLine, 
+  RiCloseLine, 
+  RiUserLine,
+  RiRefreshLine 
+} from 'react-icons/ri';
 import Community from './Community';
 
 const Home = () => {
@@ -21,7 +29,7 @@ const Home = () => {
   const [selectedPark, setSelectedPark] = useState(null);
   const [activeTab, setActiveTab] = useState('explore');
   const [showLocationModal, setShowLocationModal] = useState(true);
-  const [showReviewModal, setShowReviewModal] = useState(false); // Added State
+  const [showReviewModal, setShowReviewModal] = useState(false);
   const [parkFilter, setParkFilter] = useState('All');
   const [favorites, setFavorites] = useState(() => {
     const saved = localStorage.getItem('gs_favorites');
@@ -29,6 +37,7 @@ const Home = () => {
   });
   const [showProfile, setShowProfile] = useState(false);
   const [showPopupChat, setShowPopupChat] = useState(false);
+  const [userState, setUserState] = useState(null); // Tracks detected/searched city
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
@@ -36,37 +45,48 @@ const Home = () => {
     localStorage.setItem('gs_favorites', JSON.stringify(favorites));
   }, [favorites]);
 
-  const toggleFavorite = (park) => {
-    setFavorites(prev => {
-      const isFav = prev.find(p => p.id === park.id);
-      if (isFav) return prev.filter(p => p.id !== park.id);
-      return [...prev, park];
-    });
+  // Initial Fetch: Load all parks on startup
+  const fetchParks = async () => {
+    try {
+      setLoading(true);
+      const data = await parkService.getAllParks();
+      const formattedData = data.map((park, index) => ({
+        ...park,
+        id: park.id || `park-${index}`,
+        lat: park.latitude || park.lat || 6.4589,
+        lng: park.longitude || park.lng || 3.4261,
+        name: park.name || 'Green Space',
+        image: park.image_url || park.image || null,
+        location: park.location || 'Nigeria',
+        status: park.condition || 'Open',
+      }));
+      setParks(formattedData);
+      setUserState(null); // Clear filter title on full reset
+      setLoading(false);
+    } catch (err) {
+      console.error('Failed to fetch parks:', err);
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
-    const fetchParks = async () => {
-      try {
-        setLoading(true);
-        const data = await parkService.getAllParks();
-        const formattedData = data.map((park, index) => ({
-          ...park,
-          id: park.id || `${park.name || 'park'}-${park.latitude || park.lat || 'lat'}-${park.longitude || park.lng || park.lon || 'lng'}-${index}`,
-          lat: park.lat || park.latitude || 6.458985,
-          lng: park.lon || park.lng || park.longitude || 3.426131,
-          name: park.name || 'Green Space',
-          image: park.image_url || park.image || null,
-          status: park.condition || 'Open',
-        }));
-        setParks(formattedData);
-        setLoading(false);
-      } catch (err) {
-        console.error('Failed to fetch parks:', err);
-        setLoading(false);
-      }
-    };
     fetchParks();
   }, []);
+
+  // FIX: This function connects the LocationModal results to the Home state
+  const handleLocationUpdate = (data) => {
+    if (data.parks) {
+      // Format backend data to ensure lat/lng keys are consistent for MapView
+      const formattedParks = data.parks.map(p => ({
+        ...p,
+        lat: p.latitude,
+        lng: p.longitude
+      }));
+      setParks(formattedParks);
+      setUserState(data.city); // Updates the sidebar title (e.g., "Parks in Ikeja")
+    }
+    setShowLocationModal(false);
+  };
 
   const filteredParks = parks
     .filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()))
@@ -74,7 +94,6 @@ const Home = () => {
       const aStarts = a.name.toLowerCase().startsWith(searchTerm.toLowerCase());
       const bStarts = b.name.toLowerCase().startsWith(searchTerm.toLowerCase());
       if (aStarts && !bStarts) return -1;
-      if (!aStarts && bStarts) return 1;
       return 0;
     });
 
@@ -105,7 +124,9 @@ const Home = () => {
         <div className="flex-1 flex flex-col overflow-hidden animate-fade-in bg-white lg:bg-[#F8F9FA]">
           <div className="max-w-6xl mx-auto w-full px-4 lg:px-8 py-4 flex flex-col h-full">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
-              <h2 className="text-2xl font-bold text-neutral-900">Discover Green Spaces</h2>
+              <h2 className="text-2xl font-bold text-neutral-900">
+                {userState ? `Results in ${userState}` : "Discover Green Spaces"}
+              </h2>
               <div className="w-full md:max-w-xs">
                 <SearchBar value={searchTerm} onChange={setSearchTerm} />
               </div>
@@ -133,33 +154,16 @@ const Home = () => {
                   onClick={() => { setSelectedPark(park); setActiveTab('explore'); }}
                 >
                   <div className="w-full aspect-[4/3] rounded-xl overflow-hidden mb-4">
-                    <img 
-                      src={park.image || 'https://images.unsplash.com/photo-1585829365291-1762f59ed290'} 
-                      alt={park.name} 
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
-                    />
+                    <img src={park.image || 'https://images.unsplash.com/photo-1585829365291-1762f59ed290'} alt={park.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                   </div>
                   <div className="flex-1 flex flex-col">
                     <div className="flex items-start justify-between mb-1">
                       <h3 className="text-xl font-bold text-neutral-900 leading-tight">{park.name}</h3>
-                      <div className="flex items-center gap-1 text-accent font-bold text-sm bg-accent/10 px-2 py-1 rounded">
-                        ★ 4.8
-                      </div>
+                      <div className="flex items-center gap-1 text-accent font-bold text-sm bg-accent/10 px-2 py-1 rounded">★ 4.8</div>
                     </div>
                     <p className="text-neutral-500 text-sm flex items-center gap-1 mb-3">
-                      <RiMapPin2Line size={16} className="text-primary" /> {park.location || 'Lagos, Nigeria'}
+                      <RiMapPin2Line size={16} className="text-primary" /> {park.location}
                     </p>
-                    <div className="flex flex-wrap gap-1.5 mb-4">
-                      <span className="text-[11px] font-bold uppercase tracking-wider bg-primary/10 text-primary px-2.5 py-1 rounded">
-                        {park.pricing || 'Free'}
-                      </span>
-                      <span className="text-[11px] font-bold uppercase tracking-wider bg-neutral-100 text-neutral-500 px-2.5 py-1 rounded">
-                        Waterfall
-                      </span>
-                      <span className="text-[11px] font-bold uppercase tracking-wider bg-neutral-100 text-neutral-500 px-2.5 py-1 rounded">
-                        Quiet Zone
-                      </span>
-                    </div>
                     <div className="mt-auto flex items-center justify-between pt-3 border-t border-neutral-50">
                       <div className="flex flex-col">
                         <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">Live Flow</span>
@@ -167,7 +171,7 @@ const Home = () => {
                       </div>
                       <button 
                         className="bg-primary/10 text-primary px-4 py-2 rounded-lg font-bold text-[12px] hover:bg-primary hover:text-white transition-colors"
-                        onClick={(e) => { e.stopPropagation(); navigate(`/park/${park.id}`); }}
+                        onClick={(e) => { e.stopPropagation(); navigate(`/park/${park.id}`, { state: { park } }); }}
                       >
                         Details
                       </button>
@@ -183,16 +187,26 @@ const Home = () => {
 
     return (
       <main className="flex-1 flex flex-col xl:flex-row overflow-hidden bg-white">
-        {/* Mobile/Tablet Search Header */}
         <div className="xl:hidden p-4 border-b border-neutral-100 bg-white">
           <SearchBar value={searchTerm} onChange={setSearchTerm} />
         </div>
 
-        {/* Sidebar for Desktop - Left Side */}
+        {/* Sidebar - Dynamically updates based on location sync */}
         <div className="hidden xl:flex flex-col w-[380px] border-r border-neutral-100 p-6 overflow-y-auto scrollbar-hide bg-[#F8F9FA]">
           <div className="mb-6">
-            <h2 className="text-xl font-bold text-neutral-900 mb-1">Explore Nigeria</h2>
-            <p className="text-[11px] text-neutral-500 font-medium uppercase tracking-wider">Top rated urban green spaces</p>
+            <h2 className="text-xl font-bold text-neutral-900 mb-1">
+              {userState ? `Parks in ${userState}` : "Explore Nigeria"}
+            </h2>
+            <div className="flex items-center justify-between">
+              <p className="text-[11px] text-neutral-500 font-medium uppercase tracking-wider">
+                {userState ? "Filtered nearby" : "Top rated green spaces"}
+              </p>
+              {userState && (
+                <button onClick={fetchParks} className="text-[10px] text-primary font-bold flex items-center gap-1 hover:underline">
+                  <RiRefreshLine /> Reset Map
+                </button>
+              )}
+            </div>
           </div>
           
           {!user && (
@@ -218,20 +232,19 @@ const Home = () => {
           </div>
         </div>
 
-        {/* Main Interactive Map Area - Right Side */}
         <div className="flex-1 relative overflow-hidden bg-neutral-100">
           <MapView 
             parks={filteredParks}
             selectedPark={selectedPark} 
             onMarkerClick={(park) => { setSelectedPark(park); }} 
             onChatClick={() => setShowPopupChat(true)}
-            onViewDetails={(park) => navigate(`/park/${park.id}`)}
+            onViewDetails={(park) => navigate(`/park/${park.id}`, { state: { park } })}
           />
           
           <div className="absolute bottom-24 right-6 z-[1000] lg:bottom-12">
              <button 
                className="btn-primary w-full px-6 py-4 flex items-center justify-center gap-2 shadow-2xl hover:scale-105 active:scale-95 transition-all rounded-full"
-               onClick={() => user ? setShowReviewModal(true) : navigate('/login')} // Updated Logic
+               onClick={() => user ? setShowReviewModal(true) : navigate('/login')}
              >
                <RiTimeLine size={20} />
                <span className="hidden sm:inline">Share Review</span>
@@ -240,8 +253,7 @@ const Home = () => {
           </div>
         </div>
 
-        {/* Floating "Near You" for Mobile - Bottom Sheet Style */}
-        <div className="xl:hidden p-4 bg-white border-t border-neutral-100 rounded-t-[32px] shadow-[0_-8px_20px_rgba(0,0,0,0.05)]">
+        <div className="xl:hidden p-4 bg-white border-t border-neutral-100 rounded-t-[32px] shadow-lg">
            <NearYou 
              parks={filteredParks} 
              onParkClick={(park) => { setSelectedPark(park); }} 
@@ -254,20 +266,15 @@ const Home = () => {
   return (
     <div className="app-container">
       <div className="hidden lg:block">
-        <Navbar 
-          activeTab={activeTab} 
-          onTabChange={setActiveTab} 
-          onProfileClick={() => setShowProfile(true)} 
-          user={user}
-        />
+        <Navbar activeTab={activeTab} onTabChange={setActiveTab} onProfileClick={() => setShowProfile(true)} user={user} />
       </div>
       
       {renderContent()}
 
-      {/* Profile / Favorites Modal */}
+      {/* Profile Modal */}
       {showProfile && (
-        <div className="fixed inset-0 z-[6000] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fade-in" onClick={() => setShowProfile(false)}>
-          <div className="bg-white rounded-[32px] w-full max-w-md p-8 shadow-2xl animate-modal-pop" onClick={e => e.stopPropagation()}>
+        <div className="fixed inset-0 z-[6000] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm" onClick={() => setShowProfile(false)}>
+          <div className="bg-white rounded-[32px] w-full max-w-md p-8 shadow-2xl" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-8">
               <h2 className="text-2xl font-black">My Profile</h2>
               <button onClick={() => setShowProfile(false)} className="p-2 hover:bg-neutral-100 rounded-full">
@@ -284,34 +291,33 @@ const Home = () => {
                 <p className="text-sm text-neutral-500">{user ? 'Professional Explorer' : 'Guest'}</p>
               </div>
               {user && (
-                <button onClick={logout} className="p-2 text-error hover:bg-error/10 rounded-lg transition-colors" title="Logout">
+                <button onClick={logout} className="p-2 text-error hover:bg-error/10 rounded-lg shadow-sm" title="Logout">
                   <RiLogoutBoxRLine size={24} />
                 </button>
               )}
             </div>
 
-            {!user ? (
+            {!user && (
               <div className="bg-primary/5 p-6 rounded-2xl mb-8 border border-primary/10 text-center">
-                <p className="text-sm text-neutral-600 mb-4">Sign in to sync your favorites and join the conversation.</p>
+                <p className="text-sm text-neutral-600 mb-4">Sign in to sync your favorites.</p>
                 <Link to="/login" className="btn-primary inline-flex items-center justify-center gap-2 w-full py-3">
-                  <RiLoginBoxLine size={20} />
-                  Sign In
+                  <RiLoginBoxLine size={20} /> Sign In
                 </Link>
               </div>
-            ) : null}
+            )}
 
             <div className="mb-4">
               <h3 className="text-sm font-black text-neutral-400 uppercase tracking-widest mb-4">Saved Favorites</h3>
-              <div className="flex flex-col gap-3 overflow-y-auto max-h-[300px] pr-2 scrollbar-hide">
+              <div className="flex flex-col gap-3 overflow-y-auto max-h-[300px] scrollbar-hide">
                 {favorites.length === 0 ? (
-                  <p className="text-neutral-400 italic text-sm">No favorites saved yet. Explorer more!</p>
+                  <p className="text-neutral-400 italic text-sm">No favorites saved yet.</p>
                 ) : (
                   favorites.map(fav => (
                     <div key={fav.id} className="flex items-center gap-3 p-3 bg-white border border-neutral-100 rounded-xl hover:border-primary/20 transition-colors shadow-sm cursor-pointer" onClick={() => { setSelectedPark(fav); setShowProfile(false); setActiveTab('explore'); }}>
-                      <img src={fav.image || 'https://images.unsplash.com/photo-1585829365291-1762f59ed290'} className="w-12 h-12 rounded-lg object-cover" />
+                      <img src={fav.image || 'https://images.unsplash.com/photo-1585829365291-1762f59ed290'} className="w-12 h-12 rounded-lg object-cover" alt="" />
                       <div className="flex-1">
-                        <p className="font-bold text-neutral-900">{fav.name}</p>
-                        <p className="text-[10px] text-neutral-400">{fav.location || 'Lagos'}</p>
+                        <p className="font-bold text-neutral-900 text-sm">{fav.name}</p>
+                        <p className="text-[10px] text-neutral-400">{fav.location}</p>
                       </div>
                       <RiHeartFill className="text-primary" />
                     </div>
@@ -323,30 +329,17 @@ const Home = () => {
         </div>
       )}
 
-      {/* Responsive Navigation for Mobile and Tablets */}
       <div className="lg:hidden">
-        <BottomNav 
-          activeTab={activeTab} 
-          onTabChange={setActiveTab} 
-          onProfileClick={() => setShowProfile(true)} 
-        />
+        <BottomNav activeTab={activeTab} onTabChange={setActiveTab} onProfileClick={() => setShowProfile(true)} />
       </div>
 
-      {/* Modals and Overlays */}
-      {showReviewModal && (
-        <ReviewModal 
-          isOpen={showReviewModal} 
-          onClose={() => setShowReviewModal(false)}
-          parks={parks}
-          user={user}
-        />
-      )}
-      
+      {showReviewModal && <ReviewModal isOpen={showReviewModal} onClose={() => setShowReviewModal(false)} parks={parks} user={user} />}
       {showPopupChat && <Chatbot onClose={() => setShowPopupChat(false)} />}
       
+      {/* MODAL FIX: Using handleLocationUpdate instead of previous anonymous handlers */}
       {showLocationModal && (
         <LocationModal 
-          onEnable={() => setShowLocationModal(false)} 
+          onLocationUpdate={handleLocationUpdate} 
           onDeny={() => setShowLocationModal(false)} 
         />
       )}
