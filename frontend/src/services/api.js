@@ -1,6 +1,9 @@
 import axios from 'axios';
 
-const API_URL = 'http://127.0.0.1:5000';
+// Use environment variable with fallback for development
+const API_URL = process.env.REACT_APP_API_URL || 'http://127.0.0.1:5000';
+
+console.log('API URL:', API_URL); // Helpful for debugging
 
 const api = axios.create({
   baseURL: API_URL,
@@ -15,6 +18,20 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+// Add response interceptor for better error handling
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      console.log('Unauthorized - token may be expired');
+      // Optional: Clear local storage and redirect to login
+      // localStorage.removeItem('gs_user');
+      // window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);
+
 export const parkService = {
   getAllParks: async () => {
     try {
@@ -23,6 +40,17 @@ export const parkService = {
     } catch (error) {
       console.error('Error fetching parks:', error);
       throw error;
+    }
+  },
+
+  // Fetches DB park data + Gemini-enriched fields (DB always takes priority)
+  enrichPark: async (parkId) => {
+    try {
+      const response = await api.get(`/parks/${parkId}/enrich`);
+      return response.data;
+    } catch (error) {
+      console.error('Error enriching park:', error);
+      return null; // Graceful fallback
     }
   },
   
@@ -55,6 +83,30 @@ export const authService = {
       console.error('Registration error:', error);
       throw error;
     }
+  }
+};
+
+export const chatbotService = {
+  sendMessage: async (message) => {
+    try {
+      const response = await api.post('/chatbot', { message });
+      return response.data.reply;
+    } catch (error) {
+      console.error('Chatbot error:', error);
+      throw error;
+    }
+  }
+};
+
+export const communityService = {
+  getAllReviews: async () => {
+    const response = await api.get('/community');
+    return response.data;
+  },
+
+  submitReview: async (formData) => {
+    const response = await api.post('/community', formData);
+    return response.data;
   }
 };
 
