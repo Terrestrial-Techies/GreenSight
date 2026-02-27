@@ -1,8 +1,7 @@
-<<<<<<< HEAD
 const supabase = require("../config/supabase");
-=======
+
 const { supabase } = require("../config/supabaseClient");
->>>>>>> 5e539e2 (try this)
+(try this)
 
 const registerUser = async (email, password) => {
   const { data, error } = await supabase.auth.signUp({
