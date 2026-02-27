@@ -49,22 +49,20 @@ const chatWithGemini = async (req, res) => {
       return res.status(400).json({ error: "Message is required" });
     }
 
-    // Fetch parks from database
-    const { data: parks, error } = await supabase
-      .from("parks")
-      .select("*");
+    const { data: parks, error } = await supabase.from("parks").select("*");
 
     if (error) {
       console.warn("Chatbot parks context unavailable:", error.message);
     }
 
-    // Create context for Gemini
     const parkContext = (parks || [])
       .slice(0, 50)
       .map((p) => {
         const name = p.name || p.park_name || "Unnamed Park";
-        const description = p.description || p.summary || p.details || "No description available";
-        return `Park: ${name} - ${description}`;
+        const city = p.city || p.location || "Unknown City";
+        const description =
+          p.description || p.summary || p.details || "No description available";
+        return `Park: ${name} - City: ${city} - ${description}`;
       })
       .join("\n");
 
@@ -80,40 +78,50 @@ const chatWithGemini = async (req, res) => {
     const prompt = `
 You are a helpful assistant for a park discovery app called GreenSight.
 
-Here are available parks:
+Here are available parks in our database:
 ${parkContext}
 
 User question:
 ${message}
 
-Respond in a friendly, helpful way.
+Respond in a friendly, helpful way, using ONLY the parks provided in the context above.
 `;
 
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const text = response.text();
+    try {
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      const text = response.text();
 
-    res.json({ reply: text });
-
+      return res.json({ reply: text });
+    } catch (apiError) {
+      console.error("Gemini API Error:", apiError);
+      return res.json({
+        reply:
+          "I'm having trouble connecting to my AI brain right now, but you can explore parks using the search bar or map!",
+      });
+    }
   } catch (err) {
     console.error(err);
     const status = err?.status || err?.statusCode || 500;
     if (status === 429) {
       return res.json({
-        reply: "Gemini quota is currently exceeded. I can still help with basic park suggestions if you tell me your area.",
+        reply:
+          "Gemini quota is currently exceeded. I can still help with basic park suggestions if you tell me your area.",
         degraded: true,
         reason: "quota_exceeded",
       });
     }
     if (status === 401 || status === 403) {
       return res.json({
-        reply: "AI provider authorization is currently unavailable. I can still suggest parks based on available listings.",
+        reply:
+          "AI provider authorization is currently unavailable. I can still suggest parks based on available listings.",
         degraded: true,
         reason: "auth_error",
       });
     }
     return res.json({
-      reply: "AI is temporarily unavailable, but I can still help with basic park guidance. Ask for nearby or quieter spots.",
+      reply:
+        "AI is temporarily unavailable, but I can still help with basic park guidance. Ask for nearby or quieter spots.",
       degraded: true,
       reason: "unknown_error",
     });
