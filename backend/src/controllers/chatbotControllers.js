@@ -14,7 +14,7 @@ const chatWithGemini = async (req, res) => {
     // Fetch parks from database
     const { data: parks, error } = await supabase
       .from("parks")
-      .select("name, latitude, longitude, description, city");
+      .select("name, lat, lon, description, city");
 
     if (error) throw error;
 
@@ -47,14 +47,16 @@ const chatWithGemini = async (req, res) => {
     try {
         const { GoogleGenerativeAI } = require("@google/generative-ai");
         const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        const model = genAI.getGenerativeModel({ 
+            model: "gemini-2.5-flash"
+        });
 
         const parkContext = parks
           .map(p => `Park: ${p.name} - City: ${p.city} - ${p.description || "No description available"}`)
           .join("\n");
 
         const prompt = `
-    You are a helpful assistant for a park discovery app called GreenSight.
+    You are a helpful and concise assistant for a park discovery app called GreenSight.
 
     Here are available parks in our database:
     ${parkContext}
@@ -62,7 +64,7 @@ const chatWithGemini = async (req, res) => {
     User question:
     ${message}
 
-    Respond in a friendly, helpful way, using ONLY the parks provided in the context above.
+    Respond in a friendly, helpful way, using ONLY the parks provided in the context above. KEEP YOUR RESPONSE SHORT, CONCISE, AND STRAIGHT TO THE POINT (2-3 short sentences MAX). Do NOT list all parks.
     `;
 
         const result = await model.generateContent(prompt);
