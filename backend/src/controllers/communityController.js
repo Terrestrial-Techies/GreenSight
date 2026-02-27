@@ -5,19 +5,9 @@ const upload = multer({ storage: multer.memoryStorage() });
 
 const normalizeReview = (row = {}) => ({
   ...row,
-  review_text: row.review_text || row.text || row.content || row.message || "",
+  review_text: row.review_text || "",
   created_at: row.created_at || row.createdAt || row.updated_at || new Date().toISOString(),
 });
-
-const hasMissingColumnError = (error) => {
-  const msg = (error?.message || "").toLowerCase();
-  return (
-    error?.code === "42703" ||
-    error?.code === "PGRST204" ||
-    (msg.includes("column") && msg.includes("does not exist")) ||
-    (msg.includes("could not find") && msg.includes("column"))
-  );
-};
 
 // POST: Create community review (with optional image)
 const submitReview = async (req, res) => {
@@ -31,7 +21,8 @@ const submitReview = async (req, res) => {
 
     // If image uploaded
     if (req.file) {
-      const fileName = `${Date.now()}-${req.file.originalname}`;
+      const safeName = (req.file.originalname || "upload.jpg").replace(/\s+/g, "_");
+      const fileName = `reviews/${Date.now()}-${safeName}`;
 
       const { error: uploadError } = await supabase.storage
         .from("review-images")
@@ -56,59 +47,31 @@ const submitReview = async (req, res) => {
       imageUrl = publicUrl.publicUrl;
     }
 
-    const basePayload = { park_id, user_id };
-    const imageFieldVariants = ["image_url", "image", "photo_url", "media_url"];
-    const buildPayload = (textField, imageField = null) => {
-      const payload = { ...basePayload, [textField]: review_text };
-      if (imageUrl && imageField) {
-        payload[imageField] = imageUrl;
-      }
-      return payload;
+    const payload = {
+      park_id,
+      user_id,
+      review_text,
+      image_url: imageUrl,
     };
 
-    const textVariants = ["review_text", "text", "content", "message"];
-    let insertResult = null;
-    let lastError = null;
+    const { data, error } = await supabase
+      .from("reviews")
+      .insert([payload])
+      .select()
+      .single();
 
-    for (const field of textVariants) {
-      // Try insert with image field variants first (if image exists),
-      // then fallback to text-only if image columns are unavailable.
-      const payloadsToTry = imageUrl
-        ? imageFieldVariants.map((imgField) => buildPayload(field, imgField)).concat(buildPayload(field))
-        : [buildPayload(field)];
-
-      let data = null;
-      let error = null;
-
-      for (const payload of payloadsToTry) {
-        const result = await supabase.from("reviews").insert([payload]).select();
-        data = result.data;
-        error = result.error;
-
-        if (!error) break;
-        lastError = error;
-        if (!hasMissingColumnError(error)) {
-          throw error;
-        }
-      }
-
-      if (!error) {
-        insertResult = data?.[0] || null;
-        break;
-      }
-    }
-
-    if (!insertResult) {
-      if (lastError && hasMissingColumnError(lastError)) {
+    if (error) {
+      const msg = error?.message || "";
+      if (/Could not find the 'review_text' column/i.test(msg) || /Could not find the 'image_url' column/i.test(msg)) {
         return res.status(500).json({
-          error: "Reviews table schema mismatch. Expected one text column among: review_text, text, content, message.",
-          details: lastError.message,
+          error: "Reviews table schema mismatch. Run backend/sql/supabase_reviews_setup.sql in Supabase SQL editor.",
+          details: msg,
         });
       }
-      throw lastError || new Error("Failed to create post");
+      throw error;
     }
 
-    res.status(201).json(normalizeReview(insertResult));
+    res.status(201).json(normalizeReview(data));
 
   } catch (err) {
     console.error(err);
@@ -123,7 +86,12 @@ const getAllReviews = async (req, res) => {
     const { data, error } = await supabase
       .from("reviews")
       .select(`
-        *,
+        id,
+        park_id,
+        user_id,
+        review_text,
+        image_url,
+        created_at,
         parks(name)
       `)
       .order("created_at", { ascending: false });
