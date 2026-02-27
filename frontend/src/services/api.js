@@ -1,3 +1,9 @@
+// Add this at the very top of api.js
+console.log('=== BUILD TIME DEBUG ===');
+console.log('REACT_APP_API_URL at build time:', JSON.stringify(process.env.REACT_APP_API_URL));
+console.log('All REACT_APP env vars:', Object.keys(process.env).filter(key => key.startsWith('REACT_APP')));
+console.log('========================');
+
 import axios from 'axios';
 
 // Use environment variable with fallback for development
