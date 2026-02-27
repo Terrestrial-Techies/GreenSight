@@ -99,6 +99,12 @@ export const chatbotService = {
 };
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+
+=======
+>>>>>>> 95dc8de (fix: use environment variable for API URL)
+>>>>>>> 7da4806 (updated services/api.js)
 export const communityService = {
   getAllReviews: async () => {
     const response = await api.get('/community');
