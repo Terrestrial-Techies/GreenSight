@@ -21,7 +21,6 @@ const handleSubmit = async (e) => {
     try {
       const { authService } = await import('../services/api');
       const data = await authService.login(email, password);
-<<<<<<< ours
       const userData = data?.user || data?.session?.user || data?.session?.session?.user || {};
       const accessToken = data?.token || data?.session?.access_token || data?.session?.session?.access_token || null;
 
@@ -33,27 +32,11 @@ const handleSubmit = async (e) => {
         id: userData.id,
         email: userData.email,
         token: accessToken
-=======
-
-      // FIX: Access 'data.user' and 'data.token' directly
-      // instead of 'data.session'
-      login({
-        id: data.user.id,
-        email: data.user.email,
-        token: data.token
->>>>>>> theirs
       });
 
       navigate('/');
     } catch (err) {
-<<<<<<< ours
       setError(err.response?.data?.error || err.message || 'Login failed. Please check your credentials.');
-=======
-      // This catch was triggering because of the code error above, 
-      // not just because of a bad password!
-      setError(err.response?.data?.error || 'Login failed. Please check your credentials.');
-      console.error("Login Client Error:", err);
->>>>>>> theirs
     } finally {
       setLoading(false);
     }
