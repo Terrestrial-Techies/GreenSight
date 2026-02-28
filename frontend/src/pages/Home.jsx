@@ -6,21 +6,38 @@ import NearYou from '../components/NearYou';
 import BottomNav from '../components/BottomNav';
 import Notifications from '../components/notifications'; 
 import Support from './Support'; 
-import Community from './Community'; // 1. Import the new Community component
+import Community from './Community';
 import Chatbot from '../components/Chatbot';
 import LocationModal from '../components/LocationModal';
 import Reviews from './Reviews';
-import { parkService } from '../services/api';
-import { parkService, authService } from '../services/api';
+import { parkService, authService } from '../services/api';  // Combined import
 import { useAuth } from '../context/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
-import { RiListCheck, RiFilter2Line, RiMapPin2Line, RiTimeLine, RiTreeLine, RiHeartLine, RiHeartFill, RiLeafLine, RiGroupLine, RiLogoutBoxRLine, RiLoginBoxLine } from 'react-icons/ri';
-
+import { 
+  RiListCheck, RiFilter2Line, RiMapPin2Line, RiTimeLine, 
+  RiTreeLine, RiHeartLine, RiHeartFill, RiLeafLine, RiGroupLine, 
+  RiLogoutBoxRLine, RiLoginBoxLine, RiCloseLine, RiUserLine 
+} from 'react-icons/ri';
 
 const Home = () => {
   const [parks, setParks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedPark, setSelectedPark] = useState(null);
+  const [activeTab, setActiveTab] = useState('explore');
+  const [showChatbot, setShowChatbot] = useState(false);
+  const [showLocationModal, setShowLocationModal] = useState(true);  // Only once
+  const [parkFilter, setParkFilter] = useState('All');
+  const [showProfile, setShowProfile] = useState(false);
+  const [showPopupChat, setShowPopupChat] = useState(false);
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  // Favorites with localStorage
+  const [favorites, setFavorites] = useState(() => {
+    const saved = localStorage.getItem('gs_favorites');
+    return saved ? JSON.parse(saved) : [];
+  });
 
   // Fallback / Enhancement data (since backend is missing some fields for now)
   const enhanceParkData = (backendParks) => {
@@ -37,21 +54,6 @@ const Home = () => {
       description: park.description || `A verified green space in Lagos with a confidence score of ${park.confidence_score || 0}%`
     }));
   };
-
-  const [selectedPark, setSelectedPark] = useState(null);
-  const [activeTab, setActiveTab] = useState('explore');
-  const [showChatbot, setShowChatbot] = useState(false);
-  const [showLocationModal, setShowLocationModal] = useState(true);
-  const [showLocationModal, setShowLocationModal] = useState(true);
-  const [parkFilter, setParkFilter] = useState('All');
-  const [favorites, setFavorites] = useState(() => {
-    const saved = localStorage.getItem('gs_favorites');
-    return saved ? JSON.parse(saved) : [];
-  });
-  const [showProfile, setShowProfile] = useState(false);
-  const [showPopupChat, setShowPopupChat] = useState(false);
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
 
   useEffect(() => {
     localStorage.setItem('gs_favorites', JSON.stringify(favorites));
@@ -88,13 +90,11 @@ const Home = () => {
     fetchParks();
   }, []);
 
-
-
   const filteredParks = parks
-    .filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()))
+    .filter(p => p.name?.toLowerCase().includes(searchTerm.toLowerCase()))
     .sort((a, b) => {
-      const aStarts = a.name.toLowerCase().startsWith(searchTerm.toLowerCase());
-      const bStarts = b.name.toLowerCase().startsWith(searchTerm.toLowerCase());
+      const aStarts = a.name?.toLowerCase().startsWith(searchTerm.toLowerCase());
+      const bStarts = b.name?.toLowerCase().startsWith(searchTerm.toLowerCase());
       if (aStarts && !bStarts) return -1;
       if (!aStarts && bStarts) return 1;
       return 0;
@@ -111,8 +111,97 @@ const Home = () => {
         return <Notifications />;
       case 'support':
         return <Support />;
-      case 'community': // 2. Add case for community
+      case 'community':
         return <Community />;
+      case 'reviews':
+        return (
+          <Reviews 
+            parks={filteredParks} 
+            onParkClick={(p) => { 
+              setSelectedPark(p); 
+              setActiveTab('explore'); 
+            }} 
+          />
+        );
+      case 'park':
+        return (
+          <div className="flex-1 flex flex-col overflow-hidden animate-fade-in bg-white lg:bg-[#F8F9FA]">
+            <div className="max-w-6xl mx-auto w-full px-4 lg:px-8 py-4 flex flex-col h-full">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+                <h2 className="text-2xl font-bold text-neutral-900">Discover Green Spaces</h2>
+                <div className="w-full md:max-w-xs">
+                  <SearchBar value={searchTerm} onChange={setSearchTerm} />
+                </div>
+              </div>
+
+              <div className="flex gap-2 mb-4 overflow-x-auto pb-2 scrollbar-hide">
+                {['All', 'Open', 'Busy', 'Closed'].map(f => (
+                  <button
+                    key={f}
+                    onClick={() => setParkFilter(f)}
+                    className={`px-5 py-2 rounded-full font-bold text-sm transition-all shadow-sm ${
+                      parkFilter === f ? 'bg-primary text-white shadow-md' : 'bg-white text-neutral-600 border border-neutral-200'
+                    }`}
+                  >
+                    {f}
+                  </button>
+                ))}
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 pb-8 overflow-y-auto scrollbar-hide flex-1">
+                {getParkByStatus(parkFilter).map(park => (
+                  <div 
+                    key={park.id} 
+                    className="bg-white rounded-2xl p-4 shadow-sm hover:shadow-md border border-neutral-100 flex flex-col transition-all cursor-pointer group" 
+                    onClick={() => { setSelectedPark(park); setActiveTab('explore'); }}
+                  >
+                    <div className="w-full aspect-[4/3] rounded-xl overflow-hidden mb-4">
+                      <img 
+                        src={park.image || 'https://images.unsplash.com/photo-1585829365291-1762f59ed290'} 
+                        alt={park.name} 
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                      />
+                    </div>
+                    <div className="flex-1 flex flex-col">
+                      <div className="flex items-start justify-between mb-1">
+                        <h3 className="text-xl font-bold text-neutral-900 leading-tight">{park.name}</h3>
+                        <div className="flex items-center gap-1 text-accent font-bold text-sm bg-accent/10 px-2 py-1 rounded">
+                          ★ 4.8
+                        </div>
+                      </div>
+                      <p className="text-neutral-500 text-sm flex items-center gap-1 mb-3">
+                        <RiMapPin2Line size={16} className="text-primary" /> {park.location || 'Lagos, Nigeria'}
+                      </p>
+                      <div className="flex flex-wrap gap-1.5 mb-4">
+                        <span className="text-[11px] font-bold uppercase tracking-wider bg-primary/10 text-primary px-2.5 py-1 rounded">
+                          {park.pricing || 'Free'}
+                        </span>
+                        <span className="text-[11px] font-bold uppercase tracking-wider bg-neutral-100 text-neutral-500 px-2.5 py-1 rounded">
+                          Waterfall
+                        </span>
+                        <span className="text-[11px] font-bold uppercase tracking-wider bg-neutral-100 text-neutral-500 px-2.5 py-1 rounded">
+                          Quiet Zone
+                        </span>
+                      </div>
+                      <div className="mt-auto flex items-center justify-between pt-3 border-t border-neutral-50">
+                        <div className="flex flex-col">
+                          <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">Live Flow</span>
+                          <span className="text-primary font-bold text-sm">{park.live_crowd || 'Moderate'}</span>
+                        </div>
+                        <button 
+                          className="bg-primary/10 text-primary px-4 py-2 rounded-lg font-bold text-[12px] hover:bg-primary hover:text-white transition-colors"
+                          onClick={(e) => { e.stopPropagation(); navigate(`/park/${park.id}`); }}
+                        >
+                          Details
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        );
       case 'explore':
       default:
         return (
@@ -124,7 +213,7 @@ const Home = () => {
             />
 
             <div className="px-4 pb-4 mt-6">
-              <button className="btn-primary" onClick={handleReportCondition}>
+              <button className="btn-primary" onClick={() => alert('Report centre condition - coming soon!')}>
                 Report centre condition
               </button>
             </div>
@@ -140,214 +229,6 @@ const Home = () => {
   };
 
   return (
-    <div className="app-container overflow-hidden">
-      <Header />
-      
-      <main className="content-scroll">
-        {activeTab === 'explore' && (
-          <SearchBar value={searchTerm} onChange={setSearchTerm} />
-        )}
-
-        {renderContent()}
-    if (activeTab === 'reviews') {
-      return <Reviews parks={filteredParks} onParkClick={(p) => { setSelectedPark(p); setActiveTab('explore'); }} />;
-    if (activeTab === 'support') {
-      return (
-        <div className="flex-1 flex flex-col overflow-hidden animate-fade-in bg-white h-full relative">
-          <Chatbot isFullPage={true} onClose={() => setActiveTab('explore')} />
-        </div>
-      );
-
-    }
-
-    if (activeTab === 'review') {
-      return (
-        <div className="flex-1 flex flex-col items-center justify-center animate-fade-in bg-white h-full">
-           <div className="w-full h-full relative flex items-center justify-center overflow-hidden">
-             {/* High Impact Background Banner */}
-             <div className="absolute inset-0 z-0">
-               <img src="https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&q=80&w=2000" className="w-full h-full object-cover brightness-50" />
-               <div className="absolute inset-0 bg-gradient-to-t from-primary/80 to-transparent"></div>
-             </div>
-             
-             <div className="relative z-10 max-w-2xl w-full text-center px-6">
-                <div className="bg-white/20 backdrop-blur-md w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 border border-white/30">
-                  <RiGroupLine size={40} className="text-white" />
-                </div>
-                <h1 className="text-5xl font-black text-white mb-6 drop-shadow-lg">Coming Soon</h1>
-                <p className="text-white/90 text-xl mb-8 leading-relaxed font-medium">
-                  We're building Nigeria's most trusted community of urban explorers. 
-                  Soon you'll be able to share conditions, earn badges, and preserve our city's greenery together.
-                </p>
-                {!user ? (
-                   <Link to="/signup" className="inline-flex items-center gap-3 px-8 py-3 bg-white text-primary font-black rounded-full shadow-2xl hover:scale-105 transition-transform">
-                    <RiLeafLine size={20} />
-                    <span>JOIN THE COMMUNITY</span>
-                  </Link>
-                ) : (
-                  <div className="inline-flex items-center gap-3 px-8 py-3 bg-white/20 backdrop-blur-md text-white border border-white/40 font-black rounded-full shadow-2xl">
-                    <RiGroupLine size={20} />
-                    <span>VERIFYING FOUNDERS</span>
-                  </div>
-                )}
-             </div>
-           </div>
-        </div>
-      );
-    }
-
-    if (activeTab === 'park') {
-      return (
-        <div className="flex-1 flex flex-col overflow-hidden animate-fade-in bg-white lg:bg-[#F8F9FA]">
-          <div className="max-w-6xl mx-auto w-full px-4 lg:px-8 py-4 flex flex-col h-full">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
-              <h2 className="text-2xl font-bold text-neutral-900">Discover Green Spaces</h2>
-              <div className="w-full md:max-w-xs">
-                <SearchBar value={searchTerm} onChange={setSearchTerm} />
-              </div>
-            </div>
-
-            <div className="flex gap-2 mb-4 overflow-x-auto pb-2 scrollbar-hide">
-              {['All', 'Open', 'Busy', 'Closed'].map(f => (
-                <button
-                  key={f}
-                  onClick={() => setParkFilter(f)}
-                  className={`px-5 py-2 rounded-full font-bold text-sm transition-all shadow-sm ${
-                    parkFilter === f ? 'bg-primary text-white shadow-md' : 'bg-white text-neutral-600 border border-neutral-200'
-                  }`}
-                >
-                  {f}
-                </button>
-              ))}
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 pb-8 overflow-y-auto scrollbar-hide flex-1">
-              {getParkByStatus(parkFilter).map(park => (
-                <div 
-                  key={park.id} 
-                  className="bg-white rounded-2xl p-4 shadow-sm hover:shadow-md border border-neutral-100 flex flex-col transition-all cursor-pointer group" 
-                  onClick={() => { setSelectedPark(park); setActiveTab('explore'); }}
-                >
-                  <div className="w-full aspect-[4/3] rounded-xl overflow-hidden mb-4">
-                    <img 
-                      src={park.image || 'https://images.unsplash.com/photo-1585829365291-1762f59ed290'} 
-                      alt={park.name} 
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
-                    />
-                  </div>
-                  <div className="flex-1 flex flex-col">
-                    <div className="flex items-start justify-between mb-1">
-                      <h3 className="text-xl font-bold text-neutral-900 leading-tight">{park.name}</h3>
-                      <div className="flex items-center gap-1 text-accent font-bold text-sm bg-accent/10 px-2 py-1 rounded">
-                        ★ 4.8
-                      </div>
-                    </div>
-                    <p className="text-neutral-500 text-sm flex items-center gap-1 mb-3">
-                      <RiMapPin2Line size={16} className="text-primary" /> {park.location || 'Lagos, Nigeria'}
-                    </p>
-                    <div className="flex flex-wrap gap-1.5 mb-4">
-                      <span className="text-[11px] font-bold uppercase tracking-wider bg-primary/10 text-primary px-2.5 py-1 rounded">
-                        {park.pricing || 'Free'}
-                      </span>
-                      <span className="text-[11px] font-bold uppercase tracking-wider bg-neutral-100 text-neutral-500 px-2.5 py-1 rounded">
-                        Waterfall
-                      </span>
-                      <span className="text-[11px] font-bold uppercase tracking-wider bg-neutral-100 text-neutral-500 px-2.5 py-1 rounded">
-                        Quiet Zone
-                      </span>
-                    </div>
-                    <div className="mt-auto flex items-center justify-between pt-3 border-t border-neutral-50">
-                      <div className="flex flex-col">
-                        <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">Live Flow</span>
-                        <span className="text-primary font-bold text-sm">{park.live_crowd || 'Moderate'}</span>
-                      </div>
-                      <button 
-                        className="bg-primary/10 text-primary px-4 py-2 rounded-lg font-bold text-[12px] hover:bg-primary hover:text-white transition-colors"
-                        onClick={(e) => { e.stopPropagation(); navigate(`/park/${park.id}`); }}
-                      >
-                        Details
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      );
-    }
-
-    return (
-      <main className="flex-1 flex flex-col xl:flex-row overflow-hidden bg-white">
-        {/* Mobile/Tablet Search Header */}
-        <div className="xl:hidden p-4 border-b border-neutral-100 bg-white">
-          <SearchBar value={searchTerm} onChange={setSearchTerm} />
-        </div>
-
-        {/* Sidebar for Desktop - Left Side */}
-        <div className="hidden xl:flex flex-col w-[380px] border-r border-neutral-100 p-6 overflow-y-auto scrollbar-hide bg-[#F8F9FA]">
-          <div className="mb-6">
-            <h2 className="text-xl font-bold text-neutral-900 mb-1">Explore Nigeria</h2>
-            <p className="text-[11px] text-neutral-500 font-medium uppercase tracking-wider">Top rated urban green spaces</p>
-          </div>
-          
-          {!user && (
-            <div className="mb-6 bg-primary/5 p-4 rounded-2xl border border-primary/10">
-              <p className="text-xs text-neutral-600 mb-3">Save favorites and get personalized recommendations.</p>
-              <div className="flex gap-2">
-                <Link to="/login" className="flex-1 text-center py-2 bg-white border border-neutral-200 rounded-lg text-xs font-bold hover:bg-neutral-50">Sign In</Link>
-                <Link to="/signup" className="flex-1 text-center py-2 bg-primary text-white rounded-lg text-xs font-bold hover:bg-primary/90">Join Free</Link>
-              </div>
-            </div>
-          )}
-
-          <div className="mb-6">
-            <SearchBar value={searchTerm} onChange={setSearchTerm} />
-          </div>
-
-          <div className="flex-1">
-             <NearYou 
-               parks={filteredParks} 
-               onParkClick={(park) => { setSelectedPark(park); }} 
-               desktopLayout 
-             />
-          </div>
-        </div>
-
-        {/* Main Interactive Map Area - Right Side */}
-        <div className="flex-1 relative overflow-hidden bg-neutral-100">
-          <MapView 
-            parks={filteredParks}
-            selectedPark={selectedPark} 
-            onMarkerClick={(park) => { setSelectedPark(park); }} 
-            onChatClick={() => setShowPopupChat(true)}
-            onViewDetails={(park) => navigate(`/park/${park.id}`)}
-          />
-          
-          <div className="absolute bottom-24 right-6 z-[1000] lg:bottom-12">
-             <button 
-               className="btn-primary w-full px-6 py-4 flex items-center justify-center gap-2 shadow-2xl hover:scale-105 active:scale-95 transition-all rounded-full"
-               onClick={() => alert('Feature coming soon!')}
-             >
-               <RiTimeLine size={20} />
-               <span className="hidden sm:inline">Share Review</span>
-               <span className="sm:hidden">Report</span>
-             </button>
-          </div>
-        </div>
-
-        {/* Floating "Near You" for Mobile - Bottom Sheet Style */}
-        <div className="xl:hidden p-4 bg-white border-t border-neutral-100 rounded-t-[32px] shadow-[0_-8px_20px_rgba(0,0,0,0.05)]">
-           <NearYou 
-             parks={filteredParks} 
-             onParkClick={(park) => { setSelectedPark(park); }} 
-           />
-        </div>
-      </main>
-    );
-  };
-
-  return (
     <div className="app-container">
       <div className="hidden lg:block">
         <Navbar 
@@ -358,7 +239,13 @@ const Home = () => {
         />
       </div>
       
-      {renderContent()}
+      <main className="content-scroll">
+        {activeTab === 'explore' && (
+          <SearchBar value={searchTerm} onChange={setSearchTerm} />
+        )}
+
+        {renderContent()}
+      </main>
 
       {/* Profile / Favorites Modal */}
       {showProfile && (
@@ -428,8 +315,6 @@ const Home = () => {
         />
       </div>
 
-
-      
       {showPopupChat && <Chatbot onClose={() => setShowPopupChat(false)} />}
       
       {showLocationModal && (
@@ -442,5 +327,5 @@ const Home = () => {
   );
 };
 
-export default Home;
-export default Home;
+export default Home;  // Single export
+
