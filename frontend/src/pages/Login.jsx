@@ -21,9 +21,6 @@ const Login = () => {
     try {
       const { authService } = await import('../services/api');
       const data = await authService.login(email, password);
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
 
       // Normalize Supabase response shape (backend returns `session: data` where
       // `data` may contain `{ user, session }`). Safely extract user email and token.
@@ -36,19 +33,16 @@ const Login = () => {
       login({
         email: userObj.email,
         token,
-=======
+
       login({ 
         email: data.session.user.email, 
         token: data.session.access_token 
->>>>>>> 35c36ca (new version)
-=======
+
       const sessionData = data?.session || {};
       const userData = sessionData?.user || sessionData?.session?.user || {};
       const accessToken = sessionData?.access_token || sessionData?.session?.access_token || null;
-=======
       const userData = data?.user || data?.session?.user || data?.session?.session?.user || {};
       const accessToken = data?.token || data?.session?.access_token || data?.session?.session?.access_token || null;
->>>>>>> 585eb1b (upated)
 
       if (!userData?.email || !accessToken) {
         throw new Error('Invalid login response from server');
@@ -56,14 +50,10 @@ const Login = () => {
 
       login({ 
         id: userData.id,
-<<<<<<< HEAD
         email: userData.email || email,
         token: sessionData.access_token
->>>>>>> a6130cb (updated)
-=======
         email: userData.email,
         token: accessToken
->>>>>>> 910baa8 (add)
       });
       navigate('/');
     } catch (err) {
