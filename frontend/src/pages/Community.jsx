@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-<<<<<<< HEAD
 import { 
   RiTeamLine, 
   RiMessage3Line, 
@@ -27,7 +26,7 @@ const Community = () => {
       setLoading(false);
     }
   };
-=======
+
 import { communityService } from '../services/api';
 import { RiMapPin2Line, RiTimeLine, RiChat3Line, RiHeartLine, RiUserSmileLine, RiEditLine } from 'react-icons/ri';
 
@@ -48,7 +47,7 @@ const formatTimeAgo = (value) => {
 const Community = ({ onOpenReview }) => {
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
->>>>>>> a6130cb (updated)
+
 
   useEffect(() => {
     fetchPosts();
@@ -73,7 +72,7 @@ const Community = ({ onOpenReview }) => {
   };
 
   return (
-<<<<<<< HEAD
+
     <div className="flex flex-col h-full bg-neutral-50 animate-in fade-in duration-500">
       <header className="bg-white p-4 border-b flex justify-between items-center sticky top-0 z-20 shadow-sm">
         <div>
@@ -83,7 +82,7 @@ const Community = ({ onOpenReview }) => {
           <p className="text-[10px] text-neutral-500 uppercase tracking-widest font-bold">
             Lagos Green Network
           </p>
-=======
+
     <div className="flex-1 bg-[#F8F9FA] overflow-y-auto pb-24">
       <div className="bg-white border-b border-neutral-100 px-6 py-8 mb-6">
         <div className="max-w-4xl mx-auto flex items-start justify-between gap-4">
@@ -99,10 +98,10 @@ const Community = ({ onOpenReview }) => {
             <RiEditLine size={16} />
             Leave Message
           </button>
->>>>>>> a6130cb (updated)
+
         </div>
 
-<<<<<<< HEAD
+
         <button 
           onClick={() => setShowForm(!showForm)}
           className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all active:scale-95 shadow-lg ${
@@ -139,7 +138,7 @@ const Community = ({ onOpenReview }) => {
                   value={formData.author} 
                   onChange={(e) => setFormData({...formData, author: e.target.value})}
                 />
-=======
+
       <div className="max-w-4xl mx-auto px-4">
         {reviews.length === 0 ? (
           <div className="text-center py-20">
@@ -205,7 +204,6 @@ const Community = ({ onOpenReview }) => {
                     </div>
                   </div>
                 </div>
->>>>>>> a6130cb (updated)
               </div>
 
               <div className="space-y-1">
