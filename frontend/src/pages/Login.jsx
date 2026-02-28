@@ -22,39 +22,21 @@ const Login = () => {
       const { authService } = await import('../services/api');
       const data = await authService.login(email, password);
 
-      // Normalize Supabase response shape (backend returns `session: data` where
-      // `data` may contain `{ user, session }`). Safely extract user email and token.
-      const sessionWrapper = data.session || {};
-      const userObj = sessionWrapper.user || sessionWrapper.session?.user;
-      const token = sessionWrapper.session?.access_token || sessionWrapper.access_token || null;
+      // Handle Supabase response structure
+      const session = data.session || {};
+      const user = session.user || data.user || {};
+      const token = session.access_token || data.token || null;
 
-      if (!userObj) throw new Error('Missing user information in login response');
-
-      login({
-        email: userObj.email,
-        token,
-
-      login({ 
-        email: data.session.user.email, 
-        token: data.session.access_token 
-
-      const sessionData = data?.session || {};
-      const userData = sessionData?.user || sessionData?.session?.user || {};
-      const accessToken = sessionData?.access_token || sessionData?.session?.access_token || null;
-      const userData = data?.user || data?.session?.user || data?.session?.session?.user || {};
-      const accessToken = data?.token || data?.session?.access_token || data?.session?.session?.access_token || null;
-
-      if (!userData?.email || !accessToken) {
+      if (!user.email || !token) {
         throw new Error('Invalid login response from server');
       }
 
-      login({ 
-        id: userData.id,
-        email: userData.email || email,
-        token: sessionData.access_token
-        email: userData.email,
-        token: accessToken
+      // Call the login function from AuthContext
+      login({
+        email: user.email,
+        token: token
       });
+
       navigate('/');
     } catch (err) {
       setError(err.response?.data?.error || err.message || 'Login failed. Please check your credentials.');
@@ -67,9 +49,9 @@ const Login = () => {
     <div className="m3-auth-page">
       <div className="auth-visual-side login-bg">
         <Link to="/" className="brand-header hover:scale-105 transition-transform">
-           <RiLeafLine size={32} className="text-white" />
-           <span className="text-2xl font-bold text-white tracking-wide">GreenSight</span>
-           <span className="ml-auto text-xs bg-white/20 px-3 py-1 rounded-full backdrop-blur-md">BACK TO EXPLORE</span>
+          <RiLeafLine size={32} className="text-white" />
+          <span className="text-2xl font-bold text-white tracking-wide">GreenSight</span>
+          <span className="ml-auto text-xs bg-white/20 px-3 py-1 rounded-full backdrop-blur-md">BACK TO EXPLORE</span>
         </Link>
         <div className="visual-content">
           <h1>Welcome back.</h1>
@@ -78,11 +60,11 @@ const Login = () => {
           {/* Mock Profile Preview */}
           <div className="mock-profile-card mt-12 p-6 bg-white/10 backdrop-blur-xl rounded-3xl border border-white/20 max-w-sm">
             <div className="flex items-center gap-4 mb-4">
-               <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center text-primary font-bold">TJ</div>
-               <div>
-                 <p className="font-bold">Tunde Johnson</p>
-                 <p className="text-xs text-white/50">Verified Explorer</p>
-               </div>
+              <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center text-primary font-bold">TJ</div>
+              <div>
+                <p className="font-bold">Tunde Johnson</p>
+                <p className="text-xs text-white/50">Verified Explorer</p>
+              </div>
             </div>
             <div className="space-y-3">
               <div className="h-2 bg-white/20 rounded-full w-full"></div>
@@ -103,7 +85,7 @@ const Login = () => {
       <div className="auth-form-side">
         <div className="form-container animate-fade-in">
           <div className="mobile-only-logo">
-             <RiLeafLine size={40} className="text-primary" />
+            <RiLeafLine size={40} className="text-primary" />
           </div>
           
           <div className="form-header">
