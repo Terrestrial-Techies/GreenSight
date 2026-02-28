@@ -172,5 +172,3 @@ const getAllPosts = async (req, res) => {
 
 module.exports = { createPost, getAllPosts, upload };
 
-module.exports = { submitReview, getAllReviews, upload };
-
