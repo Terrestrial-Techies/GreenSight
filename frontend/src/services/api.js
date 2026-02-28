@@ -30,9 +30,6 @@ api.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       console.log('Unauthorized - token may be expired');
-      // Optional: Clear local storage and redirect to login
-      // localStorage.removeItem('gs_user');
-      // window.location.href = '/login';
     }
     return Promise.reject(error);
   }
@@ -49,14 +46,13 @@ export const parkService = {
     }
   },
 
-  // Fetches DB park data + Gemini-enriched fields (DB always takes priority)
   enrichPark: async (parkId) => {
     try {
       const response = await api.get(`/parks/${parkId}/enrich`);
       return response.data;
     } catch (error) {
       console.error('Error enriching park:', error);
-      return null; // Graceful fallback
+      return null;
     }
   },
   
@@ -81,6 +77,7 @@ export const authService = {
       throw error;
     }
   },
+  
   register: async (email, password) => {
     try {
       const response = await api.post('/auth/register', { email, password });
@@ -106,13 +103,23 @@ export const chatbotService = {
 
 export const communityService = {
   getAllReviews: async () => {
-    const response = await api.get('/community');
-    return response.data;
+    try {
+      const response = await api.get('/community');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching reviews:', error);
+      throw error;
+    }
   },
 
   submitReview: async (formData) => {
-    const response = await api.post('/community', formData);
-    return response.data;
+    try {
+      const response = await api.post('/community', formData);
+      return response.data;
+    } catch (error) {
+      console.error('Error submitting review:', error);
+      throw error;
+    }
   }
 };
 
