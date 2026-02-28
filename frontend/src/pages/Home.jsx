@@ -4,29 +4,23 @@ import SearchBar from '../components/SearchBar';
 import MapView from '../components/MapView';
 import NearYou from '../components/NearYou';
 import BottomNav from '../components/BottomNav';
-<<<<<<< HEAD
 import Notifications from '../components/notifications'; 
 import Support from './Support'; 
 import Community from './Community'; // 1. Import the new Community component
-=======
 import Chatbot from '../components/Chatbot';
 import LocationModal from '../components/LocationModal';
 import Reviews from './Reviews';
-<<<<<<< HEAD
->>>>>>> 5a86afe (review section)
 import { parkService } from '../services/api';
-=======
 import { parkService, authService } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
 import { RiListCheck, RiFilter2Line, RiMapPin2Line, RiTimeLine, RiTreeLine, RiHeartLine, RiHeartFill, RiLeafLine, RiGroupLine, RiLogoutBoxRLine, RiLoginBoxLine } from 'react-icons/ri';
->>>>>>> 35c36ca (new version)
+
 
 const Home = () => {
   const [parks, setParks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-<<<<<<< HEAD
 
   // Fallback / Enhancement data (since backend is missing some fields for now)
   const enhanceParkData = (backendParks) => {
@@ -43,17 +37,11 @@ const Home = () => {
       description: park.description || `A verified green space in Lagos with a confidence score of ${park.confidence_score || 0}%`
     }));
   };
-=======
+
   const [selectedPark, setSelectedPark] = useState(null);
   const [activeTab, setActiveTab] = useState('explore');
-<<<<<<< HEAD
-<<<<<<< HEAD
->>>>>>> 79079fe (map intergation with directions on click)
-=======
   const [showChatbot, setShowChatbot] = useState(false);
   const [showLocationModal, setShowLocationModal] = useState(true);
->>>>>>> 5a86afe (review section)
-=======
   const [showLocationModal, setShowLocationModal] = useState(true);
   const [parkFilter, setParkFilter] = useState('All');
   const [favorites, setFavorites] = useState(() => {
@@ -76,7 +64,6 @@ const Home = () => {
       return [...prev, park];
     });
   };
->>>>>>> 35c36ca (new version)
 
   useEffect(() => {
     const fetchParks = async () => {
@@ -119,8 +106,6 @@ const Home = () => {
   };
 
   const renderContent = () => {
-<<<<<<< HEAD
-<<<<<<< HEAD
     switch (activeTab) {
       case 'notifications':
         return <Notifications />;
@@ -164,17 +149,15 @@ const Home = () => {
         )}
 
         {renderContent()}
-=======
     if (activeTab === 'reviews') {
       return <Reviews parks={filteredParks} onParkClick={(p) => { setSelectedPark(p); setActiveTab('explore'); }} />;
-=======
     if (activeTab === 'support') {
       return (
         <div className="flex-1 flex flex-col overflow-hidden animate-fade-in bg-white h-full relative">
           <Chatbot isFullPage={true} onClose={() => setActiveTab('explore')} />
         </div>
       );
->>>>>>> 35c36ca (new version)
+
     }
 
     if (activeTab === 'review') {
@@ -360,7 +343,6 @@ const Home = () => {
              onParkClick={(park) => { setSelectedPark(park); }} 
            />
         </div>
->>>>>>> 5a86afe (review section)
       </main>
     );
   };
@@ -460,8 +442,5 @@ const Home = () => {
   );
 };
 
-<<<<<<< HEAD
 export default Home;
-=======
 export default Home;
->>>>>>> 5a86afe (review section)
