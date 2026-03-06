@@ -1,14 +1,10 @@
 const express = require("express");
 const router = express.Router();
-const { getAllParks, getNearbyParks, enrichPark } = require("../controllers/parkController");
-const verifyToken = require("../middleware/authmiddleware");
+const { getAllParks, getNearbyParks, getParkById } = require("../controllers/parkControllers");
 
-// Debugging: This will show in your terminal exactly which function is failing to import
-console.log("Import check:", { 
-  getAllParks: typeof getAllParks, 
-  getNearbyParks: typeof getNearbyParks, 
-  enrichPark: typeof enrichPark 
-});
+router.get("/", getAllParks);
+router.get("/nearby", getNearbyParks);
+router.get("/:parkId/enrich", getParkById);
 
 // 1. Fetch all parks
 router.get("/", verifyToken, getAllParks);
