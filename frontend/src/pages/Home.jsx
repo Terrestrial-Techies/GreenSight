@@ -153,7 +153,7 @@ const Home = () => {
     if (activeTab === 'review') {
       return (
         <div className="flex-1 flex flex-col overflow-hidden animate-fade-in bg-white h-full">
-          <Community onOpenReview={() => setShowReviewModal(true)} />
+          <Community />
         </div>
       );
     }

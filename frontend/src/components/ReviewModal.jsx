@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { RiCloseLine, RiImageAddLine, RiSendPlaneFill, RiLoader4Line } from 'react-icons/ri';
 import { communityService } from '../services/api'; 
 
-const ReviewModal = ({ isOpen, onClose, parks, user }) => {
+const ReviewModal = ({ isOpen, onClose, parks, user, onReviewCreated }) => {
   const [formData, setFormData] = useState({
     park_id: '',
     review_text: '',
@@ -65,14 +65,18 @@ const ReviewModal = ({ isOpen, onClose, parks, user }) => {
     if (formData.image) data.append('image', formData.image);
 
     try {
-      await communityService.submitReview(data);
+      const createdReview = await communityService.submitReview(data);
       alert('Review shared successfully!');
+      if (onReviewCreated) onReviewCreated(createdReview);
       onClose();
-      // Use a soft refresh or state update instead of window.location.reload() if possible
-      window.location.reload(); 
     } catch (err) {
       console.error("Upload Error:", err);
-      const msg = err.response?.data?.error || 'Failed to share review';
+      const apiError = err.response?.data?.error;
+      const apiDetails = err.response?.data?.details;
+      const networkError = err?.message === 'Network Error'
+        ? 'Cannot reach backend server at http://127.0.0.1:5000. Start/restart backend and try again.'
+        : null;
+      const msg = apiError || apiDetails || networkError || err.message || 'Failed to share review';
       alert(msg);
     } finally {
       setLoading(false);
