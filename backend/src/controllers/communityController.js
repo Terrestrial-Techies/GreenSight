@@ -20,7 +20,7 @@ const hasMissingColumnError = (error) => {
 };
 
 // POST: Create community review (with optional image)
-const submitReview = async (req, res) => {
+const createPost = async (req, res) => {
   try {
     const { park_id, user_id, review_text } = req.body;
     if (!park_id || !user_id || !review_text) {
@@ -117,7 +117,7 @@ const submitReview = async (req, res) => {
 };
 
 // GET: Fetch all community posts
-const getAllReviews = async (req, res) => {
+const getAllPosts = async (req, res) => {
   try {
     // Preferred query: include park name via relationship if FK is configured.
     const { data, error } = await supabase
@@ -170,4 +170,5 @@ const getAllReviews = async (req, res) => {
   }
 };
 
-module.exports = { submitReview, getAllReviews, upload };
+module.exports = { createPost, getAllPosts, upload };
+

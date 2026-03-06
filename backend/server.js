@@ -23,22 +23,14 @@ const imageRoutes = require("./src/routes/imageRoutes");
 
 // Auth & User
 app.use("/auth", authRoutes);
-
-// Parks (Primary Logic)
-// This handles: GET /parks (all) and POST /parks/nearby
-app.use("/parks", parkRoutes); 
-
-// Park Images & Gallery
-// FIX: Changed from "/parks" to "/park-images" to prevent route collision
-app.use("/park-images", imageRoutes); 
-
-// Social & Community
 app.use('/community', communityRoutes);
-app.use('/notifications', notificationsRoutes);
-
-// AI & Logic
+app.use("/parks", parkRoutes);
 app.use("/chatbot", chatbotRoutes);
 app.use("/recommendations", recommendationRoutes);
+app.use('/notifications', notificationsRoutes);
+
+app.use('/support', supportRoutes);
+app.use("/parks", imageRoutes);
 
 // Support
 app.use('/support', supportRoutes);

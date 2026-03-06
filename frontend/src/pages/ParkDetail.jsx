@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { RiArrowLeftLine, RiMapPin2Line, RiTimeLine, RiInformationLine, RiCheckLine, RiHeartLine, RiHeartFill, RiDirectionLine, RiShareLine, RiStarFill } from 'react-icons/ri';
 import { parkService } from '../services/api';
 import './ParkDetail.css';
@@ -7,30 +7,19 @@ import './ParkDetail.css';
 const ParkDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const location = useLocation();
-  const fallbackPark = location.state?.park;
-
-  const [park, setPark] = useState(fallbackPark || null);
-  const [loading, setLoading] = useState(!fallbackPark);
+  const [park, setPark] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [isFavorite, setIsFavorite] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
 
   useEffect(() => {
     const fetchParkDetails = async () => {
       try {
-        if (!fallbackPark) {
-            setLoading(true);
-        }
+        setLoading(true);
         // Step 1: Get basic info or full enriched info
         const data = await parkService.enrichPark(id);
         if (data) {
           setPark(data);
-        } else if (!fallbackPark) {
-          const allParks = await parkService.getAllParks();
-          const found = allParks.find(p => p.id === id || p.id == id);
-          if (found) {
-            setPark(found);
-          }
         }
       } catch (err) {
         console.error('Failed to fetch park details:', err);
@@ -39,7 +28,7 @@ const ParkDetail = () => {
       }
     };
     fetchParkDetails();
-  }, [id, fallbackPark]);
+  }, [id]);
 
   if (loading) {
     return (
@@ -71,15 +60,15 @@ const ParkDetail = () => {
           <RiArrowLeftLine size={24} />
         </button>
         <div className="flex items-center gap-2">
-          <button className="p-2 hover:bg-neutral-100 rounded-full transition-colors">
-            <RiShareLine size={24} />
-          </button>
-          <button
-            onClick={() => setIsFavorite(!isFavorite)}
-            className={`p-2 rounded-full transition-colors ${isFavorite ? 'text-primary bg-primary/5' : 'text-neutral-400 hover:bg-neutral-100'}`}
-          >
-            {isFavorite ? <RiHeartFill size={24} /> : <RiHeartLine size={24} />}
-          </button>
+           <button className="p-2 hover:bg-neutral-100 rounded-full transition-colors">
+             <RiShareLine size={24} />
+           </button>
+           <button 
+             onClick={() => setIsFavorite(!isFavorite)}
+             className={`p-2 rounded-full transition-colors ${isFavorite ? 'text-primary bg-primary/5' : 'text-neutral-400 hover:bg-neutral-100'}`}
+           >
+             {isFavorite ? <RiHeartFill size={24} /> : <RiHeartLine size={24} />}
+           </button>
         </div>
       </header>
 
@@ -87,13 +76,13 @@ const ParkDetail = () => {
         {/* Gallery Hero Section */}
         <section className="mt-8 mb-10">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 h-[300px] md:h-[500px]">
-            <div
+            <div 
               className="md:col-span-3 rounded-[40px] overflow-hidden shadow-2xl relative cursor-zoom-in"
               onClick={() => setSelectedImage(park.image_url || park.image)}
             >
-              <img
-                src={park.image_url || park.image || 'https://images.unsplash.com/photo-1585829365291-1762f59ed290'}
-                alt={park.name}
+              <img 
+                src={park.image_url || park.image || 'https://images.unsplash.com/photo-1585829365291-1762f59ed290'} 
+                alt={park.name} 
                 className="w-full h-full object-cover"
               />
               <div className="absolute top-6 left-6">
@@ -102,14 +91,14 @@ const ParkDetail = () => {
                 </span>
               </div>
             </div>
-
+            
             <div className="hidden md:flex flex-col gap-4">
               {(park.gallery || [
                 'https://images.unsplash.com/photo-1567080597717-adc73369d19a?auto=format&fit=crop&q=80&w=400',
                 'https://images.unsplash.com/photo-1596438459194-f275f413d6ff?auto=format&fit=crop&q=80&w=400'
               ]).slice(0, 2).map((img, idx) => (
-                <div
-                  key={idx}
+                <div 
+                  key={idx} 
                   className="flex-1 rounded-[32px] overflow-hidden shadow-lg hover:brightness-110 transition-all cursor-zoom-in relative"
                   onClick={() => setSelectedImage(img)}
                 >
@@ -127,18 +116,18 @@ const ParkDetail = () => {
 
         {/* Fullscreen Image Overlay */}
         {selectedImage && (
-          <div
+          <div 
             className="fixed inset-0 z-[10000] bg-black/95 flex items-center justify-center p-4 md:p-12 animate-fade-in"
             onClick={() => setSelectedImage(null)}
           >
-            <button className="absolute top-8 right-8 text-white p-4">
-              <RiArrowLeftLine size={32} className="rotate-90 md:rotate-0" />
-            </button>
-            <img
-              src={selectedImage}
-              className="max-w-full max-h-full object-contain rounded-2xl shadow-2xl animate-modal-pop"
-              alt="Gallery item"
-            />
+             <button className="absolute top-8 right-8 text-white p-4">
+                <RiArrowLeftLine size={32} className="rotate-90 md:rotate-0" />
+             </button>
+             <img 
+               src={selectedImage} 
+               className="max-w-full max-h-full object-contain rounded-2xl shadow-2xl animate-modal-pop" 
+               alt="Gallery item"
+             />
           </div>
         )}
 
@@ -158,12 +147,12 @@ const ParkDetail = () => {
             </div>
 
             <div className="p-8 bg-white rounded-[32px] shadow-sm border border-neutral-100">
-              <h3 className="text-xl font-black mb-4 flex items-center gap-2">
-                <span className="text-primary">✨</span> AI Insights Summary
-              </h3>
-              <p className="text-neutral-600 leading-relaxed text-lg italic">
-                "{park.ai_summary || "This space offers a refreshing escape from the urban hustle. Known for its lush greenery and quiet atmosphere, it's a perfect spot for meditation or a peaceful morning walk."}"
-              </p>
+               <h3 className="text-xl font-black mb-4 flex items-center gap-2">
+                 <span className="text-primary">✨</span> AI Insights Summary
+               </h3>
+               <p className="text-neutral-600 leading-relaxed text-lg italic">
+                 "{park.ai_summary || "This space offers a refreshing escape from the urban hustle. Known for its lush greenery and quiet atmosphere, it's a perfect spot for meditation or a peaceful morning walk."}"
+               </p>
             </div>
 
             <div>
@@ -188,52 +177,52 @@ const ParkDetail = () => {
             <div>
               <h3 className="text-2xl font-black mb-6">Latest Conditions</h3>
               <div className="bg-white p-8 rounded-[32px] shadow-sm border border-neutral-100 space-y-6">
-                <div className="flex items-center justify-between">
-                  <span className="font-bold text-neutral-600">Crowd Level</span>
-                  <span className="bg-blue-50 text-blue-600 px-4 py-1 rounded-full font-bold text-sm uppercase">{park.crowd_level || 'Moderate'}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="font-bold text-neutral-600">Cleanliness</span>
-                  <span className="bg-green-50 text-green-600 px-4 py-1 rounded-full font-bold text-sm uppercase">{park.cleanliness || 'Excellent'}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="font-bold text-neutral-600">Safety Perception</span>
-                  <span className="bg-primary/5 text-primary px-4 py-1 rounded-full font-bold text-sm uppercase">{park.safety_perception || 'High'}</span>
-                </div>
-                <div className="pt-4 border-t border-neutral-50 flex items-center justify-between">
-                  <p className="text-xs text-neutral-400 italic">Last updated by a professional explorer 15 minutes ago</p>
-                  <button className="text-primary font-bold text-sm hover:underline">Verify now</button>
-                </div>
+                 <div className="flex items-center justify-between">
+                    <span className="font-bold text-neutral-600">Crowd Level</span>
+                    <span className="bg-blue-50 text-blue-600 px-4 py-1 rounded-full font-bold text-sm uppercase">{park.crowd_level || 'Moderate'}</span>
+                 </div>
+                 <div className="flex items-center justify-between">
+                    <span className="font-bold text-neutral-600">Cleanliness</span>
+                    <span className="bg-green-50 text-green-600 px-4 py-1 rounded-full font-bold text-sm uppercase">{park.cleanliness || 'Excellent'}</span>
+                 </div>
+                 <div className="flex items-center justify-between">
+                    <span className="font-bold text-neutral-600">Safety Perception</span>
+                    <span className="bg-primary/5 text-primary px-4 py-1 rounded-full font-bold text-sm uppercase">{park.safety_perception || 'High'}</span>
+                 </div>
+                 <div className="pt-4 border-t border-neutral-50 flex items-center justify-between">
+                    <p className="text-xs text-neutral-400 italic">Last updated by a professional explorer 15 minutes ago</p>
+                    <button className="text-primary font-bold text-sm hover:underline">Verify now</button>
+                 </div>
               </div>
             </div>
           </div>
 
           {/* Sidebar Info */}
           <div className="space-y-8">
-            <div className="bg-primary p-8 rounded-[40px] text-white shadow-xl">
-              <RiTimeLine size={32} className="mb-4 text-white" />
-              <h4 className="text-lg font-bold mb-2">Visiting Hours</h4>
-              <p className="!text-white font-medium mb-6">Open Daily: 8:00 AM - 6:30 PM (Lagos Local Time)</p>
-              <button className="w-full py-4 bg-white text-primary rounded-2xl font-black hover:scale-[1.02] transition-transform shadow-lg">
-                Report Current Flow
-              </button>
-            </div>
+             <div className="bg-primary p-8 rounded-[40px] text-white shadow-xl">
+                <RiTimeLine size={32} className="mb-4 text-white" />
+                <h4 className="text-lg font-bold mb-2">Visiting Hours</h4>
+                <p className="!text-white font-medium mb-6">Open Daily: 8:00 AM - 6:30 PM (Lagos Local Time)</p>
+                <button className="w-full py-4 bg-white text-primary rounded-2xl font-black hover:scale-[1.02] transition-transform shadow-lg">
+                  Report Current Flow
+                </button>
+             </div>
 
-            <div className="bg-white p-6 rounded-[40px] border border-neutral-100 shadow-sm">
-              <h4 className="font-black mb-4">Pricing & Access</h4>
-              <div className="p-4 bg-neutral-50 rounded-2xl mb-4">
-                <p className="text-sm font-bold text-neutral-500 uppercase tracking-widest mb-1">Standard Entry</p>
-                <p className="text-2xl font-black text-primary">{park.pricing || 'Free Access'}</p>
-              </div>
-              <p className="text-xs text-neutral-400 italic">Verified by GreenSight Community Board</p>
-            </div>
+             <div className="bg-white p-6 rounded-[40px] border border-neutral-100 shadow-sm">
+                <h4 className="font-black mb-4">Pricing & Access</h4>
+                <div className="p-4 bg-neutral-50 rounded-2xl mb-4">
+                  <p className="text-sm font-bold text-neutral-500 uppercase tracking-widest mb-1">Standard Entry</p>
+                  <p className="text-2xl font-black text-primary">{park.pricing || 'Free Access'}</p>
+                </div>
+                <p className="text-xs text-neutral-400 italic">Verified by GreenSight Community Board</p>
+             </div>
 
-            <div className="flex flex-col gap-3">
-              <button className="flex items-center justify-center gap-3 w-full py-4 bg-neutral-900 text-white rounded-[24px] font-bold hover:bg-black transition-colors">
-                <RiDirectionLine size={24} />
-                Get Directions
-              </button>
-            </div>
+             <div className="flex flex-col gap-3">
+                <button className="flex items-center justify-center gap-3 w-full py-4 bg-neutral-900 text-white rounded-[24px] font-bold hover:bg-black transition-colors">
+                  <RiDirectionLine size={24} />
+                  Get Directions
+                </button>
+             </div>
           </div>
         </div>
       </main>

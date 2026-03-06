@@ -7,7 +7,11 @@ const resolveGeminiKey = () => {
   if (!trimmed) return "";
 
   const aiKeyIndex = trimmed.indexOf("AIza");
-  return aiKeyIndex >= 0 ? trimmed.slice(aiKeyIndex) : trimmed;
+  if (aiKeyIndex >= 0) {
+    return trimmed.slice(aiKeyIndex);
+  }
+
+  return trimmed;
 };
 
 const getModel = () => {
@@ -26,29 +30,45 @@ const buildFallbackReply = (message, parks = []) => {
     .filter(Boolean);
 
   if (text.includes("near") || text.includes("closest")) {
-    return "I can still help while AI is limited. Share your area in Lagos and I'll suggest the closest green spaces.";
+    return "I can still help while AI is limited. Share your area in Lagos and I will suggest the closest green spaces.";
+  }
+  if (text.includes("open") || text.includes("time") || text.includes("hours")) {
+    return "I cannot verify live opening hours right now. Please check park details in-app and community updates before visiting.";
   }
   if (topParks.length) {
-    return `AI is temporarily limited, but you can start with: ${topParks.join(", ")}.`;
+    return `AI is temporarily limited, but you can start with: ${topParks.join(", ")}. Ask for a specific area and I will narrow it down.`;
   }
-  return "AI is temporarily limited, but I can still help. Ask for nearby parks or family-friendly options.";
+  return "AI is temporarily limited, but I can still help. Ask for nearby parks, quieter spots, or family-friendly options.";
 };
 
 const chatWithGemini = async (req, res) => {
   try {
-    const { message, history = [] } = req.body;
+    const { message } = req.body;
 
     if (!message) {
       return res.status(400).json({ error: "Message is required" });
     }
 
-    // 1. Fetch parks for context
-    const { data: parks, error: dbError } = await supabase.from("parks").select("*");
-    if (dbError) console.warn("Parks context unavailable:", dbError.message);
+    // Fetch parks from database
+    const { data: parks, error } = await supabase
+      .from("parks")
+      .select("*");
+
+    if (error) {
+      console.warn("Chatbot parks context unavailable:", error.message);
+    }
+
+    // Create context for Gemini
+    const parkContext = (parks || [])
+      .slice(0, 50)
+      .map((p) => {
+        const name = p.name || p.park_name || "Unnamed Park";
+        const description = p.description || p.summary || p.details || "No description available";
+        return `Park: ${name} - ${description}`;
+      })
+      .join("\n");
 
     const model = getModel();
-    
-    // 2. Immediate Fallback if No API Key
     if (!model) {
       return res.json({
         reply: buildFallbackReply(message, parks || []),
@@ -57,63 +77,45 @@ const chatWithGemini = async (req, res) => {
       });
     }
 
-    // 3. Prepare Context String
-    const parkContext = (parks || [])
-      .slice(0, 30)
-      .map((p) => {
-        const name = p.name || p.park_name || "Unnamed Park";
-        const desc = p.description || p.summary || "No description available";
-        const loc = p.location || p.address || "Lagos";
-        return `- ${name}: ${desc} (Location: ${loc})`;
-      })
-      .join("\n");
+    const prompt = `
+You are a helpful assistant for a park discovery app called GreenSight.
 
-    // 4. Format History for Gemini SDK
-    const formattedHistory = history.map(msg => ({
-      role: msg.role === 'assistant' ? 'model' : 'user',
-      parts: [{ text: msg.content }]
-    }));
+Here are available parks:
+${parkContext}
 
-    const chat = model.startChat({
-      history: formattedHistory,
-      generationConfig: { maxOutputTokens: 500 },
-    });
+User question:
+${message}
 
-    const systemPrompt = `
-      You are "Greenie", the friendly expert guide for GreenSight in Lagos, Nigeria.
-      CONTEXT OF AVAILABLE PARKS:
-      ${parkContext}
-      
-      GUIDELINES:
-      - Use the context to suggest specific parks.
-      - If data is missing, suggest checking the "View Details" section.
-      - Keep it concise and Lagos-focused.
-    `;
+Respond in a friendly, helpful way.
+`;
 
-    // 5. Execute AI Generation
-    const result = await chat.sendMessage(`${systemPrompt}\n\nUser: ${message}`);
+    const result = await model.generateContent(prompt);
     const response = await result.response;
     const text = response.text();
 
-    return res.json({ reply: text });
+    res.json({ reply: text });
 
   } catch (err) {
-    console.error("Chat Error:", err);
-    const status = err?.status || 500;
-
-    // Specific Error Handling
+    console.error(err);
+    const status = err?.status || err?.statusCode || 500;
     if (status === 429) {
       return res.json({
-        reply: "My AI quota is full for the moment. Try again shortly!",
+        reply: "Gemini quota is currently exceeded. I can still help with basic park suggestions if you tell me your area.",
         degraded: true,
-        reason: "quota_exceeded"
+        reason: "quota_exceeded",
       });
     }
-
+    if (status === 401 || status === 403) {
+      return res.json({
+        reply: "AI provider authorization is currently unavailable. I can still suggest parks based on available listings.",
+        degraded: true,
+        reason: "auth_error",
+      });
+    }
     return res.json({
-      reply: "I'm having a bit of a glitch, but you can still browse the map!",
+      reply: "AI is temporarily unavailable, but I can still help with basic park guidance. Ask for nearby or quieter spots.",
       degraded: true,
-      reason: "internal_error"
+      reason: "unknown_error",
     });
   }
 };
