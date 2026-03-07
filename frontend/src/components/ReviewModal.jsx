@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { RiCloseLine, RiImageAddLine, RiSendPlaneFill, RiLoader4Line } from 'react-icons/ri';
 import { communityService } from '../services/api'; 
 
-const ReviewModal = ({ isOpen, onClose, parks, user }) => {
+const ReviewModal = ({ isOpen, onClose, parks, user, onReviewCreated }) => {
   const [formData, setFormData] = useState({
     park_id: '',
     review_text: '',
@@ -43,39 +43,40 @@ const ReviewModal = ({ isOpen, onClose, parks, user }) => {
     }
   };
 
-  const handleSubmit = async (e) => {
+ const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // 1. Check if user exists
     if (!user) return alert("Please login to share a review");
 
-    /** * FIX: Handle nested user object.
-     * If user object is { token: '...', user: { id: 1 } }, we need user.user.id
-     * If user object is just { id: 1 }, we use user.id
-     */
     const userId = getUserId();
 
     if (!userId) {
-      console.error("Auth Debug - User Object:", user);
-      return alert("User ID not found. Please log out and log back in.");
+      console.error("Auth Debug - User Object Structure:", user);
+      return alert("Session error: User ID missing. Please log out and back in once.");
     }
+
+    if (!formData.park_id) return alert("Please select a park");
 
     setLoading(true);
     const data = new FormData();
     data.append('park_id', formData.park_id);
-    data.append('user_id', userId); // Sending the extracted ID
+    data.append('user_id', userId); 
     data.append('review_text', formData.review_text);
     if (formData.image) data.append('image', formData.image);
 
     try {
-      await communityService.submitReview(data);
+      const createdReview = await communityService.submitReview(data);
       alert('Review shared successfully!');
+      if (onReviewCreated) onReviewCreated(createdReview);
       onClose();
-      // Optional: Refresh to show new post
-      window.location.reload(); 
     } catch (err) {
       console.error("Upload Error:", err);
-      const msg = err.response?.data?.error || 'Failed to share review';
+      const apiError = err.response?.data?.error;
+      const apiDetails = err.response?.data?.details;
+      const networkError = err?.message === 'Network Error'
+        ? 'Cannot reach backend server at http://127.0.0.1:5000. Start/restart backend and try again.'
+        : null;
+      const msg = apiError || apiDetails || networkError || err.message || 'Failed to share review';
       alert(msg);
     } finally {
       setLoading(false);

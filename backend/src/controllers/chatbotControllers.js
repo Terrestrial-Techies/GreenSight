@@ -49,86 +49,79 @@ const chatWithGemini = async (req, res) => {
       return res.status(400).json({ error: "Message is required" });
     }
 
-    // Fetch parks from database
-    const { data: parks, error } = await supabase
-      .from("parks")
-      .select("name, lat, lon, description, city");
+    const { data: parks, error } = await supabase.from("parks").select("*");
 
     if (error) {
       console.warn("Chatbot parks context unavailable:", error.message);
     }
 
-    // If Gemini API Key exists, use it
-    try {
-        const { GoogleGenerativeAI } = require("@google/generative-ai");
-        const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-        const model = genAI.getGenerativeModel({ 
-            model: "gemini-2.5-flash"
-        });
+    const parkContext = (parks || [])
+      .slice(0, 50)
+      .map((p) => {
+        const name = p.name || p.park_name || "Unnamed Park";
+        const city = p.city || p.location || "Unknown City";
+        const description =
+          p.description || p.summary || p.details || "No description available";
+        return `Park: ${name} - City: ${city} - ${description}`;
+      })
+      .join("\n");
 
-        const parkContext = parks
-          .map(p => `Park: ${p.name} - City: ${p.city} - ${p.description || "No description available"}`)
-          .join("\n");
-
-        const prompt = `
-    You are a helpful and concise assistant for a park discovery app called GreenSight.
-
-    Here are available parks in our database:
-    ${parkContext}
-
-    User question:
-    ${message}
-
-    Respond in a friendly, helpful way, using ONLY the parks provided in the context above. KEEP YOUR RESPONSE SHORT, CONCISE, AND STRAIGHT TO THE POINT (2-3 short sentences MAX). Do NOT list all parks.
-    `;
-
-        const result = await model.generateContent(prompt);
-        const response = await result.response;
-        const text = response.text();
-
-        return res.json({ reply: text });
-    } catch (apiError) {
-        console.error("Gemini API Error:", apiError);
-        return res.json({ reply: "I'm having trouble connecting to my AI brain right now, but you can explore parks using the search bar or map!" });
+    const model = getModel();
+    if (!model) {
+      return res.json({
+        reply: buildFallbackReply(message, parks || []),
+        degraded: true,
+        reason: "missing_gemini_key",
+      });
     }
 
     const prompt = `
 You are a helpful assistant for a park discovery app called GreenSight.
 
-Here are available parks:
+Here are available parks in our database:
 ${parkContext}
 
 User question:
 ${message}
 
-Respond in a friendly, helpful way.
+Respond in a friendly, helpful way, using ONLY the parks provided in the context above.
 `;
 
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const text = response.text();
+    try {
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      const text = response.text();
 
-    res.json({ reply: text });
-
+      return res.json({ reply: text });
+    } catch (apiError) {
+      console.error("Gemini API Error:", apiError);
+      return res.json({
+        reply:
+          "I'm having trouble connecting to my AI brain right now, but you can explore parks using the search bar or map!",
+      });
+    }
   } catch (err) {
     console.error(err);
     const status = err?.status || err?.statusCode || 500;
     if (status === 429) {
       return res.json({
-        reply: "Gemini quota is currently exceeded. I can still help with basic park suggestions if you tell me your area.",
+        reply:
+          "Gemini quota is currently exceeded. I can still help with basic park suggestions if you tell me your area.",
         degraded: true,
         reason: "quota_exceeded",
       });
     }
     if (status === 401 || status === 403) {
       return res.json({
-        reply: "AI provider authorization is currently unavailable. I can still suggest parks based on available listings.",
+        reply:
+          "AI provider authorization is currently unavailable. I can still suggest parks based on available listings.",
         degraded: true,
         reason: "auth_error",
       });
     }
     return res.json({
-      reply: "AI is temporarily unavailable, but I can still help with basic park guidance. Ask for nearby or quieter spots.",
+      reply:
+        "AI is temporarily unavailable, but I can still help with basic park guidance. Ask for nearby or quieter spots.",
       degraded: true,
       reason: "unknown_error",
     });
