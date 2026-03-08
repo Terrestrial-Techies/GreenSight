@@ -94,7 +94,6 @@ const MapView = ({ parks = [], selectedPark, userLocation, initialShowDirections
       const watchId = navigator.geolocation.watchPosition(
         (position) => {
           setUserLoc([position.coords.latitude, position.coords.longitude]);
-          setLocationDenied(false);
         },
         (error) => console.log("Watching location..."), 
         { enableHighAccuracy: true }
@@ -186,12 +185,8 @@ const MapView = ({ parks = [], selectedPark, userLocation, initialShowDirections
 
         {/* Floating Detail Card - Google Maps Style */}
         {displayPark && (
-          <div className="absolute bottom-4 left-4 right-4 z-[3000] animate-slide-up">
-            <div
-              className="bg-white rounded-2xl p-3 shadow-xl flex gap-3 border border-black/5 backdrop-blur-md bg-white/95"
-              onMouseDown={(e) => e.stopPropagation()}
-              onTouchStart={(e) => e.stopPropagation()}
-            >
+          <div className="absolute bottom-4 left-4 right-4 z-[1000] animate-slide-up">
+            <div className="bg-white rounded-2xl p-3 shadow-xl flex gap-3 border border-black/5 backdrop-blur-md bg-white/95">
               <div className="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0 bg-neutral-50">
                 <img
                   src={displayPark.image_url || displayPark.image || `https://images.unsplash.com/photo-1519331379826-f10be5486c6f?auto=format&fit=crop&q=80&w=200&sig=${displayPark.id}`}
@@ -226,33 +221,14 @@ const MapView = ({ parks = [], selectedPark, userLocation, initialShowDirections
                   </span>
 
                   <div className="ml-auto flex gap-2">
-                    {locationDenied && (
-                      <span className="text-[10px] text-warning font-semibold self-center">
-                        Location off
-                      </span>
-                    )}
                     <button
-                      type="button"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        handleOpenDetails(displayPark);
-                      }}
-                      onMouseDown={(e) => e.stopPropagation()}
-                      onTouchStart={(e) => e.stopPropagation()}
+                      onClick={() => handleOpenDetails(displayPark)}
                       className="bg-[#07B60D] text-white text-[11px] font-bold px-3 py-1.5 rounded-lg hover:bg-[#069b0b] transition-colors"
                     >
                       View Details
                     </button>
                     <button
-                      type="button"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        setShowDirections(!showDirections);
-                      }}
-                      onMouseDown={(e) => e.stopPropagation()}
-                      onTouchStart={(e) => e.stopPropagation()}
+                      onClick={() => setShowDirections(!showDirections)}
                       className={`text-[11px] font-bold px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-all shadow-sm ${showDirections
                           ? 'bg-neutral-900 text-white'
                           : 'bg-primary text-white hover:bg-primary/90'
@@ -327,4 +303,3 @@ const MapView = ({ parks = [], selectedPark, userLocation, initialShowDirections
 };
 
 export default MapView;
-

@@ -4,6 +4,7 @@ import Home from './pages/Home';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import ParkDetail from './pages/ParkDetail';
+import ParkReviews from './pages/ParkReviews';
 import './App.css';
 
 function App() {
@@ -15,6 +16,7 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/park/:id" element={<ParkDetail />} />
+          <Route path="/park/:id/reviews" element={<ParkReviews />} />
         </Routes>
       </Router>
     </AuthProvider>

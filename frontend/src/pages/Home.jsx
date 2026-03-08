@@ -4,20 +4,15 @@ import SearchBar from '../components/SearchBar';
 import MapView from '../components/MapView';
 import NearYou from '../components/NearYou';
 import BottomNav from '../components/BottomNav';
-import Notifications from '../components/notifications'; 
-import Support from './Support'; 
-import Community from './Community';
 import Chatbot from '../components/Chatbot';
 import LocationModal from '../components/LocationModal';
+import ReviewModal from '../components/ReviewModal'; // Added Import
 import Reviews from './Reviews';
-import { parkService, authService } from '../services/api';  // Combined import
+import { parkService, authService } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { Link, useNavigate } from 'react-router-dom';
-import { 
-  RiListCheck, RiFilter2Line, RiMapPin2Line, RiTimeLine, 
-  RiTreeLine, RiHeartLine, RiHeartFill, RiLeafLine, RiGroupLine, 
-  RiLogoutBoxRLine, RiLoginBoxLine, RiCloseLine, RiUserLine 
-} from 'react-icons/ri';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { RiListCheck, RiFilter2Line, RiMapPin2Line, RiTimeLine, RiTreeLine, RiHeartLine, RiHeartFill, RiLeafLine, RiGroupLine, RiLogoutBoxRLine, RiLoginBoxLine, RiCloseLine, RiUserLine } from 'react-icons/ri';
+import Community from './Community';
 
 const Home = () => {
   const [parks, setParks] = useState([]);
@@ -25,15 +20,9 @@ const Home = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedPark, setSelectedPark] = useState(null);
   const [activeTab, setActiveTab] = useState('explore');
-  const [showChatbot, setShowChatbot] = useState(false);
-  const [showLocationModal, setShowLocationModal] = useState(true);  // Only once
+  const [showLocationModal, setShowLocationModal] = useState(true);
+  const [showReviewModal, setShowReviewModal] = useState(false); // Added State
   const [parkFilter, setParkFilter] = useState('All');
-  const [showProfile, setShowProfile] = useState(false);
-  const [showPopupChat, setShowPopupChat] = useState(false);
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
-
-  // Favorites with localStorage
   const [favorites, setFavorites] = useState(() => {
     const saved = localStorage.getItem('gs_favorites');
     return saved ? JSON.parse(saved) : [];
@@ -113,10 +102,10 @@ const Home = () => {
   }, []);
 
   const filteredParks = parks
-    .filter(p => p.name?.toLowerCase().includes(searchTerm.toLowerCase()))
+    .filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()))
     .sort((a, b) => {
-      const aStarts = a.name?.toLowerCase().startsWith(searchTerm.toLowerCase());
-      const bStarts = b.name?.toLowerCase().startsWith(searchTerm.toLowerCase());
+      const aStarts = a.name.toLowerCase().startsWith(searchTerm.toLowerCase());
+      const bStarts = b.name.toLowerCase().startsWith(searchTerm.toLowerCase());
       if (aStarts && !bStarts) return -1;
       if (!aStarts && bStarts) return 1;
       return 0;
@@ -212,7 +201,7 @@ const Home = () => {
     if (activeTab === 'review') {
       return (
         <div className="flex-1 flex flex-col overflow-hidden animate-fade-in bg-white h-full">
-          <Community />
+          <Community onOpenReview={() => setShowReviewModal(true)} />
         </div>
       );
     }
@@ -346,17 +335,18 @@ const Home = () => {
             onChatClick={() => setShowPopupChat(true)}
             onViewDetails={(park) => navigate(`/park/${park.id}`, { state: { park, userLocation } })}
           />
-        );
-      case 'park':
-        return (
-          <div className="flex-1 flex flex-col overflow-hidden animate-fade-in bg-white lg:bg-[#F8F9FA]">
-            <div className="max-w-6xl mx-auto w-full px-4 lg:px-8 py-4 flex flex-col h-full">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
-                <h2 className="text-2xl font-bold text-neutral-900">Discover Green Spaces</h2>
-                <div className="w-full md:max-w-xs">
-                  <SearchBar value={searchTerm} onChange={setSearchTerm} />
-                </div>
-              </div>
+          
+          <div className="absolute bottom-24 right-6 z-[1000] lg:bottom-12">
+             <button 
+               className="btn-primary w-full px-6 py-4 flex items-center justify-center gap-2 shadow-2xl hover:scale-105 active:scale-95 transition-all rounded-full"
+               onClick={() => user ? setShowReviewModal(true) : navigate('/login')} // Updated Logic
+             >
+               <RiTimeLine size={20} />
+               <span className="hidden sm:inline">Share Review</span>
+               <span className="sm:hidden">Report</span>
+             </button>
+          </div>
+        </div>
 
         {/* Floating "Near You" for Mobile - Bottom Sheet Style */}
         <div className="xl:hidden p-4 bg-white border-t border-neutral-100 rounded-t-[32px] shadow-[0_-8px_20px_rgba(0,0,0,0.05)]">
@@ -381,13 +371,7 @@ const Home = () => {
         />
       </div>
       
-      <main className="content-scroll">
-        {activeTab === 'explore' && (
-          <SearchBar value={searchTerm} onChange={setSearchTerm} />
-        )}
-
-        {renderContent()}
-      </main>
+      {renderContent()}
 
       {/* Profile / Favorites Modal */}
       {showProfile && (
@@ -457,11 +441,21 @@ const Home = () => {
         />
       </div>
 
+      {/* Modals and Overlays */}
+      {showReviewModal && (
+        <ReviewModal 
+          isOpen={showReviewModal} 
+          onClose={() => setShowReviewModal(false)}
+          parks={parks}
+          user={user}
+        />
+      )}
+      
       {showPopupChat && <Chatbot onClose={() => setShowPopupChat(false)} />}
       
       {showLocationModal && (
         <LocationModal 
-          onEnable={() => setShowLocationModal(false)} 
+          onEnable={handleEnableLocation} 
           onDeny={() => setShowLocationModal(false)} 
           isLoading={isLocating}
         />
@@ -470,5 +464,4 @@ const Home = () => {
   );
 };
 
-export default Home;  // Single export
-
+export default Home;

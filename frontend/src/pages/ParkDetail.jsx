@@ -153,8 +153,13 @@ const ParkDetail = () => {
             <div>
               <div className="flex items-center gap-2 mb-2">
                 <RiStarFill className="text-yellow-400" size={20} />
-                <span className="font-bold text-lg">4.9</span>
-                <span className="text-neutral-400">(120+ Verified Reports)</span>
+                <span className="font-bold text-lg">{park.average_rating || '—'}</span>
+                <button
+                  onClick={() => navigate(`/park/${id}/reviews`)}
+                  className="text-neutral-400 hover:text-primary hover:underline transition-colors cursor-pointer"
+                >
+                  ({park.reviews_count || 0} Verified Review{park.reviews_count !== 1 ? 's' : ''})
+                </button>
               </div>
               <h1 className="text-5xl font-black text-neutral-900 mb-4">{park.name}</h1>
               <p className="text-neutral-500 flex items-center gap-2 text-lg">
