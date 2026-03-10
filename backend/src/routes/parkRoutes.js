@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { getAllParks, getNearbyParks, getParkById } = require("../controllers/parkControllers");
+const { getAllParks, getNearbyParks, getParkById } = require("../controllers/parkController");
 
 router.get("/", getAllParks);
 router.get("/nearby", getNearbyParks);
