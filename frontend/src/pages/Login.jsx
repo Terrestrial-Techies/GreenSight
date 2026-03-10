@@ -13,7 +13,7 @@ const Login = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  const handleSubmit = async (e) => {
+const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setLoading(true);
@@ -21,20 +21,17 @@ const Login = () => {
     try {
       const { authService } = await import('../services/api');
       const data = await authService.login(email, password);
+      const userData = data?.user || data?.session?.user || data?.session?.session?.user || {};
+      const accessToken = data?.token || data?.session?.access_token || data?.session?.session?.access_token || null;
 
-      // Handle Supabase response structure
-      const session = data.session || {};
-      const user = session.user || data.user || {};
-      const token = session.access_token || data.token || null;
-
-      if (!user.email || !token) {
+      if (!userData?.email || !accessToken) {
         throw new Error('Invalid login response from server');
       }
 
-      // Call the login function from AuthContext
-      login({
-        email: user.email,
-        token: token
+      login({ 
+        id: userData.id,
+        email: userData.email,
+        token: accessToken
       });
 
       navigate('/');
@@ -56,7 +53,7 @@ const Login = () => {
         <div className="visual-content">
           <h1>Welcome back.</h1>
           <p>Sign in to continue your journey through Lagos' verified urban green spaces.</p>
-          
+
           {/* Mock Profile Preview */}
           <div className="mock-profile-card mt-12 p-6 bg-white/10 backdrop-blur-xl rounded-3xl border border-white/20 max-w-sm">
             <div className="flex items-center gap-4 mb-4">
@@ -87,7 +84,7 @@ const Login = () => {
           <div className="mobile-only-logo">
             <RiLeafLine size={40} className="text-primary" />
           </div>
-          
+
           <div className="form-header">
             <h2>Sign In</h2>
             <p>Access your favorites and latest park reports.</p>
@@ -100,12 +97,12 @@ const Login = () => {
               <label>Work Email</label>
               <div className="input-wrapper">
                 <RiMailLine className="icon" />
-                <input 
-                  type="email" 
-                  placeholder="name@company.com" 
+                <input
+                  type="email"
+                  placeholder="name@company.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  required 
+                  required
                 />
               </div>
             </div>
@@ -114,15 +111,15 @@ const Login = () => {
               <label>Password</label>
               <div className="input-wrapper">
                 <RiLockPasswordLine className="icon" />
-                <input 
-                  type={showPassword ? "text" : "password"} 
-                  placeholder="Enter your password" 
+                <input
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Enter your password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  required 
+                  required
                 />
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   className="password-toggle-btn"
                   onClick={() => setShowPassword(!showPassword)}
                 >

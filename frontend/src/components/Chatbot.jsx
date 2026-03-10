@@ -111,7 +111,6 @@ const Chatbot = ({ onClose, isFullPage = false }) => {
   );
 
   if (isFullPage) return ChatContent;
-
   return (
     <div className="chatbot-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
       {ChatContent}

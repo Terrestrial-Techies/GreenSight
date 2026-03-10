@@ -11,6 +11,22 @@ const ParkDetail = () => {
   const [loading, setLoading] = useState(true);
   const [isFavorite, setIsFavorite] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
+  const [userLoc, setUserLoc] = useState(null);
+
+  // Get real user location only if already provided by parent (Home)
+  // This prevents the permission dialog from popping up unexpectedly
+  useEffect(() => {
+    if ("geolocation" in navigator && location.state?.userLocation) {
+        const watchId = navigator.geolocation.watchPosition(
+          (position) => {
+            setUserLoc([position.coords.latitude, position.coords.longitude]);
+          },
+          (error) => console.log("Waiting for location permission..."),
+          { enableHighAccuracy: true }
+        );
+        return () => navigator.geolocation.clearWatch(watchId);
+    }
+  }, [location.state?.userLocation]);
 
   useEffect(() => {
     const fetchParkDetails = async () => {
@@ -78,11 +94,11 @@ const ParkDetail = () => {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 h-[300px] md:h-[500px]">
             <div 
               className="md:col-span-3 rounded-[40px] overflow-hidden shadow-2xl relative cursor-zoom-in"
-              onClick={() => setSelectedImage(park.image_url || park.image)}
+              onClick={() => setSelectedImage(park.image_url || park.image || `https://images.unsplash.com/photo-1519331379826-f10be5486c6f?auto=format&fit=crop&q=80&w=1200&sig=${park.id}`)}
             >
-              <img 
-                src={park.image_url || park.image || 'https://images.unsplash.com/photo-1585829365291-1762f59ed290'} 
-                alt={park.name} 
+              <img
+                src={park.image_url || park.image || `https://images.unsplash.com/photo-1519331379826-f10be5486c6f?auto=format&fit=crop&q=80&w=1200&sig=${park.id}`}
+                alt={park.name}
                 className="w-full h-full object-cover"
               />
               <div className="absolute top-6 left-6">
@@ -94,8 +110,8 @@ const ParkDetail = () => {
             
             <div className="hidden md:flex flex-col gap-4">
               {(park.gallery || [
-                'https://images.unsplash.com/photo-1567080597717-adc73369d19a?auto=format&fit=crop&q=80&w=400',
-                'https://images.unsplash.com/photo-1596438459194-f275f413d6ff?auto=format&fit=crop&q=80&w=400'
+                `https://images.unsplash.com/photo-1567080597717-adc73369d19a?auto=format&fit=crop&q=80&w=400&sig=${park.id}1`,
+                `https://images.unsplash.com/photo-1519331379826-f10be5486c6f?auto=format&fit=crop&q=80&w=400&sig=${park.id}2`
               ]).slice(0, 2).map((img, idx) => (
                 <div 
                   key={idx} 
@@ -137,8 +153,13 @@ const ParkDetail = () => {
             <div>
               <div className="flex items-center gap-2 mb-2">
                 <RiStarFill className="text-yellow-400" size={20} />
-                <span className="font-bold text-lg">4.9</span>
-                <span className="text-neutral-400">(120+ Verified Reports)</span>
+                <span className="font-bold text-lg">{park.average_rating || '—'}</span>
+                <button
+                  onClick={() => navigate(`/park/${id}/reviews`)}
+                  className="text-neutral-400 hover:text-primary hover:underline transition-colors cursor-pointer"
+                >
+                  ({park.reviews_count || 0} Verified Review{park.reviews_count !== 1 ? 's' : ''})
+                </button>
               </div>
               <h1 className="text-5xl font-black text-neutral-900 mb-4">{park.name}</h1>
               <p className="text-neutral-500 flex items-center gap-2 text-lg">
@@ -217,12 +238,27 @@ const ParkDetail = () => {
                 <p className="text-xs text-neutral-400 italic">Verified by GreenSight Community Board</p>
              </div>
 
-             <div className="flex flex-col gap-3">
-                <button className="flex items-center justify-center gap-3 w-full py-4 bg-neutral-900 text-white rounded-[24px] font-bold hover:bg-black transition-colors">
-                  <RiDirectionLine size={24} />
-                  Get Directions
-                </button>
-             </div>
+            <div className="flex flex-col gap-3">
+              <button 
+                className="flex items-center justify-center gap-3 w-full py-4 bg-black text-white rounded-[24px] font-bold hover:bg-neutral-800 transition-all shadow-lg active:scale-95 cursor-pointer z-10"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  // Redirect to internal map
+                  navigate('/', { 
+                    state: { 
+                      activeTab: 'explore', 
+                      selectedPark: park,
+                      showDirections: true,
+                      userLocation: location.state?.userLocation || userLoc
+                    } 
+                  });
+                }}
+              >
+                <RiDirectionLine size={24} />
+                Get Directions
+              </button>
+            </div>
           </div>
         </div>
       </main>

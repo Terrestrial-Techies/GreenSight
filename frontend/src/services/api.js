@@ -1,39 +1,62 @@
-// Add this at the very top of api.js
-console.log('=== BUILD TIME DEBUG ===');
-console.log('REACT_APP_API_URL at build time:', JSON.stringify(process.env.REACT_APP_API_URL));
-console.log('All REACT_APP env vars:', Object.keys(process.env).filter(key => key.startsWith('REACT_APP')));
-console.log('========================');
-
 import axios from 'axios';
 
-// Use environment variable with fallback for development
-const API_URL = process.env.REACT_APP_API_URL || 'http://127.0.0.1:5000';
+// 1. Safe Environment Variable Access
+// Vite uses import.meta.env, Webpack uses process.env
+const getEnvVar = (key) => {
+  // Check Vite first
+  if (typeof import.meta !== 'undefined' && import.meta.env) {
+    return import.meta.env[`VITE_${key}`];
+  }
+  // Fallback to process.env (for Webpack/CRA)
+  if (typeof process !== 'undefined' && process.env) {
+    return process.env[`REACT_APP_${key}`];
+  }
+  return null;
+};
 
-console.log('API URL:', API_URL); // Helpful for debugging
+const API_URL = getEnvVar('API_URL') || 'http://127.0.0.1:5000';
+
+console.log('=== API CONFIGURATION ===');
+console.log('Target Base URL:', API_URL);
+console.log('=========================');
 
 const api = axios.create({
   baseURL: API_URL,
 });
 
-// Add a request interceptor to include auth token
+// 2. Request Interceptor: Attach Auth Token
 api.interceptors.request.use((config) => {
-  const user = JSON.parse(localStorage.getItem('gs_user'));
-  if (user && user.token) {
-    config.headers.Authorization = `Bearer ${user.token}`;
+  try {
+    const userStr = localStorage.getItem('gs_user');
+    if (userStr) {
+      const user = JSON.parse(userStr);
+      if (user && user.token) {
+        config.headers.Authorization = `Bearer ${user.token}`;
+      }
+    }
+  } catch (error) {
+    console.error('Auth Interceptor Error: Could not parse gs_user', error);
   }
   return config;
+}, (error) => {
+  return Promise.reject(error);
 });
 
-// Add response interceptor for better error handling
+// 3. Response Interceptor: Error Handling
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      console.log('Unauthorized - token may be expired');
+      console.warn('Unauthorized: Token may be expired. Redirecting to login...');
+      // Optional: Clear storage and redirect
+      // localStorage.removeItem('gs_user');
+      // window.location.href = '/login';
     }
     return Promise.reject(error);
   }
 );
+
+// --- SERVICE EXPORTS ---
 
 export const parkService = {
   getAllParks: async () => {
@@ -62,6 +85,18 @@ export const parkService = {
       return response.data.recommendations;
     } catch (error) {
       console.error('Error fetching recommendations:', error);
+      throw error;
+    }
+  },
+
+  getNearbyParks: async (lat, lng, limit = 10) => {
+    try {
+      const response = await api.get('/parks/nearby', {
+        params: { lat, lng, limit }
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching nearby parks:', error);
       throw error;
     }
   }

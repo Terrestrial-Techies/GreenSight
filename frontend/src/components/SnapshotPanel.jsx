@@ -22,34 +22,11 @@ const SnapshotPanel = ({ park, onClose, onToggleFavorite, isFavorite, isLoading 
 
   if (!park) return null;
 
-  const handleGetDirections = () => {
-    setIsLocating(true);
-
-    if ("geolocation" in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const { latitude: userLat, longitude: userLng } = position.coords;
-          
-          const directionsUrl = `https://www.google.com/maps/dir/?api=1&origin=${userLat},${userLng}&destination=${park.lat},${park.lng}&travelmode=driving`;
-          
-          window.open(directionsUrl, '_blank');
-          setIsLocating(false);
-        },
-        (error) => {
-          console.error("Geolocation Error:", error);
-          setIsLocating(false);
-
-          const fallbackUrl = `https://www.google.com/maps/search/?api=1&query=${park.lat},${park.lng}`;
-          window.open(fallbackUrl, '_blank');
-          alert("Unable to find your location. Opening the park's location instead.");
-        },
-        { enableHighAccuracy: true, timeout: 5000 } 
-      );
-    } else {
-      setIsLocating(false);
-      alert("Geolocation is not supported by your browser.");
-    }
-  };
+  // const getConditionColor = (val) => {
+  //   if (val?.toLowerCase() === 'fair' || val?.toLowerCase() === 'average') return 'orange';
+  //   if (val?.toLowerCase() === 'bad' || val?.toLowerCase() === 'poor') return 'red';
+  //   return '#07B60A';
+  // };
 
   const getStatusLabel = (status) => {
     switch (status?.toLowerCase()) {
@@ -95,7 +72,8 @@ const SnapshotPanel = ({ park, onClose, onToggleFavorite, isFavorite, isLoading 
   ];
 
   return (
-    <div className="snapshot-panel glass-morphism">
+    <div className={`snapshot-panel ${isExpanded ? 'expanded' : 'compact'}`}>
+      {/* Header */}
       <div className="snapshot-header">
         <div className="park-info">
           <h2>{park.name}</h2>
