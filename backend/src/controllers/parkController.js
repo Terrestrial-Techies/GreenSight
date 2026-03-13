@@ -163,4 +163,4 @@ const getParkById = async (req, res) => {
   }
 };
 
-module.exports = { getAllParks, getNearbyParks, getParkById };
+module.exports = { getAllParks, getNearbyParks, getParkById, enrichPark };
