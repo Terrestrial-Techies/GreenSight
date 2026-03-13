@@ -1,7 +1,14 @@
 const express = require("express");
 const cors = require("cors");
 const path = require("path");
-require("dotenv").config({ path: path.join(__dirname, '.env') });
+
+// Only load .env in development
+if (process.env.NODE_ENV !== 'production') {
+  require("dotenv").config({ path: path.join(__dirname, '.env') });
+  console.log('📝 Loaded .env file for development');
+} else {
+  console.log('🚀 Running in production, using Render environment variables');
+}
 
 const app = express();
 
@@ -20,26 +27,23 @@ const supportRoutes = require("./src/routes/supportRoutes");
 const imageRoutes = require("./src/routes/imageRoutes");
 
 // --- Route Definitions ---
-
-// Auth & User
 app.use("/auth", authRoutes);
 app.use('/community', communityRoutes);
 app.use("/parks", parkRoutes);
 app.use("/chatbot", chatbotRoutes);
 app.use("/recommendations", recommendationRoutes);
 app.use('/notifications', notificationsRoutes);
-
 app.use('/support', supportRoutes);
 app.use("/parks", imageRoutes);
 
-// Support
-app.use('/support', supportRoutes);
+// Note: You had duplicate supportRoutes - removed one
 
 // --- Server Startup ---
-const PORT = 5000;
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`-----------------------------------------`);
   console.log(`Server running on port ${PORT}`);
-  console.log(`Parks endpoint: http://localhost:${PORT}/parks/nearby`);
+  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`Parks endpoint: http://localhost:${PORT}/parks`);
   console.log(`-----------------------------------------`);
 });
