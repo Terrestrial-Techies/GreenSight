@@ -2,7 +2,6 @@ const express = require("express");
 const cors = require("cors");
 const path = require("path");
 
-// Only load .env in development
 if (process.env.NODE_ENV !== 'production') {
   require("dotenv").config({ path: path.join(__dirname, '.env') });
   console.log('📝 Loaded .env file for development');
@@ -26,10 +25,7 @@ const communityRoutes = require("./src/routes/communityRoutes");
 const supportRoutes = require("./src/routes/supportRoutes");
 const imageRoutes = require("./src/routes/imageRoutes");
 
-<<<<<<< HEAD
-=======
 // --- Route Definitions ---
->>>>>>> ae0958d016279d0c5708eab0d3f91cde54dc553f
 app.use("/auth", authRoutes);
 app.use('/community', communityRoutes);
 app.use("/parks", parkRoutes);
@@ -38,8 +34,6 @@ app.use("/recommendations", recommendationRoutes);
 app.use('/notifications', notificationsRoutes);
 app.use('/support', supportRoutes);
 app.use("/parks", imageRoutes);
-
-// Note: You had duplicate supportRoutes - removed one
 
 // --- Server Startup ---
 const PORT = process.env.PORT || 5000;
