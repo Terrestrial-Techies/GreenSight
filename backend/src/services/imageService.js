@@ -1,5 +1,5 @@
 const https = require("https");
-const supabase = require("../config/supabaseClient");
+const supabase = require("../config/supabase");
 
 const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY;
 const UNSPLASH_ACCESS_KEY = process.env.UNSPLASH_ACCESS_KEY;

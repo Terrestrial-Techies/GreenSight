@@ -59,6 +59,7 @@ const enrichPark = async (req, res) => {
   }
 };
 
+<<<<<<< HEAD
 // NEW: Get nearby parks
 const getNearbyParks = async (req, res) => {
   try {
@@ -101,3 +102,6 @@ const getNearbyParks = async (req, res) => {
 };
 
 module.exports = { getAllParks, getNearbyParks, enrichPark };
+=======
+module.exports = { getAllParks, getNearbyParks, getParkById, enrichPark };
+>>>>>>> ae0958d016279d0c5708eab0d3f91cde54dc553f

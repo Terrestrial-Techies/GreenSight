@@ -14,7 +14,7 @@ const getEnvVar = (key) => {
   return null;
 };
 
-const API_URL = getEnvVar('API_URL') || 'https://greensight-2r7r.onrender.com';
+const API_URL = getEnvVar('API_URL') || 'https://your-backend.onrender.com';
 
 console.log('=== API CONFIGURATION ===');
 console.log('Target Base URL:', API_URL);

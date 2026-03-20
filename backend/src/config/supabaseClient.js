@@ -1,32 +1,21 @@
-// supabaseClient.js
-const { createClient } = require("@supabase/supabase-js");
+const { createClient } = require('@supabase/supabase-js');
 
-// Load environment variables
-const SUPABASE_URL = process.env.SUPABASE_URL;
-const SUPABASE_KEY = process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_SERVICE_KEY;
+console.log('=== Supabase Client Config Debug ===');
+console.log('SUPABASE_URL present:', !!process.env.SUPABASE_URL);
+console.log('SUPABASE_SERVICE_ROLE_KEY present:', !!process.env.SUPABASE_SERVICE_ROLE_KEY);
+console.log('====================================');
 
-if (!SUPABASE_URL || !SUPABASE_KEY) {
-  // Only log internally, do not expose to user
-  console.error(
-    "Supabase client not fully configured. Make sure SUPABASE_URL and SUPABASE_ANON_KEY or SUPABASE_SERVICE_KEY are set in your environment."
-  );
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+if (!supabaseUrl || !supabaseKey) {
+  console.error('❌ Missing Supabase credentials in supabaseClient.js:');
+  console.error('  SUPABASE_URL:', supabaseUrl ? 'SET' : 'MISSING');
+  console.error('  SUPABASE_SERVICE_ROLE_KEY:', supabaseKey ? 'SET' : 'MISSING');
+  throw new Error("Missing Supabase backend credentials. Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.");
 }
 
-const supabase = createClient(SUPABASE_URL || "", SUPABASE_KEY || "");
+const supabase = createClient(supabaseUrl, supabaseKey);
 
-// Optional: Wrapper function for queries to handle generic errors
-const safeQuery = async (queryFunc) => {
-  try {
-    const { data, error } = await queryFunc();
-    if (error) {
-      console.error("Supabase query error:", error);
-      return { data: null, error: "An error occurred. Please try again." };
-    }
-    return { data, error: null };
-  } catch (err) {
-    console.error("Unexpected Supabase error:", err);
-    return { data: null, error: "An error occurred. Please try again." };
-  }
-};
-
-module.exports = { supabase, safeQuery };
+console.log('✅ Supabase client initialized successfully');
+module.exports = supabase;
