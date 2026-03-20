@@ -19,9 +19,6 @@ const communityRoutes = require("./src/routes/communityRoutes");
 const supportRoutes = require("./src/routes/supportRoutes");
 const imageRoutes = require("./src/routes/imageRoutes");
 
-// --- Route Definitions ---
-
-// Auth & User
 app.use("/auth", authRoutes);
 app.use('/community', communityRoutes);
 app.use("/parks", parkRoutes);
