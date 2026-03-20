@@ -1,4 +1,4 @@
-const { supabase } = require("../config/supabaseClient");
+const supabase = require("../config/supabaseClient");
 
 const registerUser = async (email, password) => {
   const { data, error } = await supabase.auth.signUp({
