@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { RiArrowLeftLine, RiMapPin2Line, RiTimeLine, RiInformationLine, RiCheckLine, RiHeartLine, RiHeartFill, RiDirectionLine, RiShareLine, RiStarFill } from 'react-icons/ri';
 import { parkService } from '../services/api';
 import './ParkDetail.css';
@@ -7,6 +7,7 @@ import './ParkDetail.css';
 const ParkDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const [park, setPark] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isFavorite, setIsFavorite] = useState(false);
@@ -32,7 +33,26 @@ const ParkDetail = () => {
     const fetchParkDetails = async () => {
       try {
         setLoading(true);
-        // Step 1: Get basic info or full enriched info
+
+        // Use park data from route state if available (passed from Home/MapView)
+        if (location.state?.park) {
+          setPark(location.state.park);
+          setLoading(false);
+
+          // Also try to enrich with reviews in the background
+          try {
+            const enrichedData = await parkService.enrichPark(id);
+            if (enrichedData) {
+              setPark(enrichedData);
+            }
+          } catch (enrichErr) {
+            // Keep the route-state data if enrichment fails
+            console.log('Enrichment failed, using passed park data');
+          }
+          return;
+        }
+
+        // Fallback: fetch from API (for direct URL access)
         const data = await parkService.enrichPark(id);
         if (data) {
           setPark(data);
@@ -44,7 +64,7 @@ const ParkDetail = () => {
       }
     };
     fetchParkDetails();
-  }, [id]);
+  }, [id, location.state]);
 
   if (loading) {
     return (
@@ -153,7 +173,7 @@ const ParkDetail = () => {
             <div>
               <div className="flex items-center gap-2 mb-2">
                 <RiStarFill className="text-yellow-400" size={20} />
-                <span className="font-bold text-lg">{park.average_rating || '—'}</span>
+                <span className="font-bold text-lg">{park.average_rating || park.rating || '—'}</span>
                 <button
                   onClick={() => navigate(`/park/${id}/reviews`)}
                   className="text-neutral-400 hover:text-primary hover:underline transition-colors cursor-pointer"
@@ -163,59 +183,91 @@ const ParkDetail = () => {
               </div>
               <h1 className="text-5xl font-black text-neutral-900 mb-4">{park.name}</h1>
               <p className="text-neutral-500 flex items-center gap-2 text-lg">
-                <RiMapPin2Line className="text-primary" /> {park.address || 'Lagos, Nigeria'}
+                <RiMapPin2Line className="text-primary" /> {park.address || park.city || park.location || 'Location not specified'}
               </p>
             </div>
 
+            {/* AI Summary / Description */}
             <div className="p-8 bg-white rounded-[32px] shadow-sm border border-neutral-100">
                <h3 className="text-xl font-black mb-4 flex items-center gap-2">
-                 <span className="text-primary">✨</span> AI Insights Summary
+                 <span className="text-primary">✨</span> {park.ai_summary ? 'AI Insights Summary' : 'About This Park'}
                </h3>
                <p className="text-neutral-600 leading-relaxed text-lg italic">
-                 "{park.ai_summary || "This space offers a refreshing escape from the urban hustle. Known for its lush greenery and quiet atmosphere, it's a perfect spot for meditation or a peaceful morning walk."}"
+                 "{park.ai_summary || park.description || park.summary || 'No description available for this park yet. Check back later or leave a review to help other visitors!'}"
                </p>
             </div>
 
-            <div>
-              <h3 className="text-2xl font-black mb-6">Facilities & Features</h3>
-              <div className="grid grid-cols-2 gap-4">
-                {(park.facilities || [
-                  { name: 'Seating', available: true },
-                  { name: 'Walking Paths', available: true },
-                  { name: 'Security', available: true },
-                  { name: 'Parking', available: true }
-                ]).map((f, i) => (
-                  <div key={i} className={`flex items-center gap-3 p-4 rounded-2xl border ${f.available ? 'bg-white border-neutral-100 shadow-sm' : 'bg-neutral-50 border-transparent opacity-60'}`}>
-                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${f.available ? 'bg-primary/10 text-primary' : 'bg-neutral-200 text-neutral-400'}`}>
-                      <RiCheckLine size={20} />
-                    </div>
-                    <span className={`font-bold ${f.available ? 'text-neutral-800' : 'text-neutral-400'}`}>{f.name}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
+            {/* Facilities & Features — only shown if real data exists */}
+            {(() => {
+              // Build facilities list from AI-generated facilities or from DB features
+              const facilityItems = park.facilities
+                ? (Array.isArray(park.facilities)
+                    ? park.facilities.map(f => typeof f === 'string' ? { name: f, available: true } : f)
+                    : [])
+                : (park.features
+                    ? (Array.isArray(park.features)
+                        ? park.features.map(f => ({ name: f, available: true }))
+                        : [])
+                    : []);
 
-            <div>
-              <h3 className="text-2xl font-black mb-6">Latest Conditions</h3>
-              <div className="bg-white p-8 rounded-[32px] shadow-sm border border-neutral-100 space-y-6">
-                 <div className="flex items-center justify-between">
-                    <span className="font-bold text-neutral-600">Crowd Level</span>
-                    <span className="bg-blue-50 text-blue-600 px-4 py-1 rounded-full font-bold text-sm uppercase">{park.crowd_level || 'Moderate'}</span>
-                 </div>
-                 <div className="flex items-center justify-between">
-                    <span className="font-bold text-neutral-600">Cleanliness</span>
-                    <span className="bg-green-50 text-green-600 px-4 py-1 rounded-full font-bold text-sm uppercase">{park.cleanliness || 'Excellent'}</span>
-                 </div>
-                 <div className="flex items-center justify-between">
-                    <span className="font-bold text-neutral-600">Safety Perception</span>
-                    <span className="bg-primary/5 text-primary px-4 py-1 rounded-full font-bold text-sm uppercase">{park.safety_perception || 'High'}</span>
-                 </div>
-                 <div className="pt-4 border-t border-neutral-50 flex items-center justify-between">
-                    <p className="text-xs text-neutral-400 italic">Last updated by a professional explorer 15 minutes ago</p>
-                    <button className="text-primary font-bold text-sm hover:underline">Verify now</button>
-                 </div>
+              if (facilityItems.length === 0) return null;
+
+              return (
+                <div>
+                  <h3 className="text-2xl font-black mb-6">Facilities & Features</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    {facilityItems.map((f, i) => (
+                      <div key={i} className={`flex items-center gap-3 p-4 rounded-2xl border ${f.available !== false ? 'bg-white border-neutral-100 shadow-sm' : 'bg-neutral-50 border-transparent opacity-60'}`}>
+                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${f.available !== false ? 'bg-primary/10 text-primary' : 'bg-neutral-200 text-neutral-400'}`}>
+                          <RiCheckLine size={20} />
+                        </div>
+                        <span className={`font-bold ${f.available !== false ? 'text-neutral-800' : 'text-neutral-400'}`}>{f.name}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* Latest Conditions — only shown if real data exists */}
+            {(park.crowd_level || park.cleanliness || park.safety_perception || park.condition) && (
+              <div>
+                <h3 className="text-2xl font-black mb-6">Latest Conditions</h3>
+                <div className="bg-white p-8 rounded-[32px] shadow-sm border border-neutral-100 space-y-6">
+                   {park.condition && (
+                     <div className="flex items-center justify-between">
+                        <span className="font-bold text-neutral-600">Overall Condition</span>
+                        <span className={`px-4 py-1 rounded-full font-bold text-sm uppercase ${
+                          park.condition?.toLowerCase() === 'bad' ? 'bg-red-50 text-red-600' :
+                          park.condition?.toLowerCase() === 'average' ? 'bg-yellow-50 text-yellow-600' :
+                          'bg-green-50 text-green-600'
+                        }`}>{park.condition}</span>
+                     </div>
+                   )}
+                   {park.crowd_level && (
+                     <div className="flex items-center justify-between">
+                        <span className="font-bold text-neutral-600">Crowd Level</span>
+                        <span className="bg-blue-50 text-blue-600 px-4 py-1 rounded-full font-bold text-sm uppercase">{park.crowd_level}</span>
+                     </div>
+                   )}
+                   {park.cleanliness && (
+                     <div className="flex items-center justify-between">
+                        <span className="font-bold text-neutral-600">Cleanliness</span>
+                        <span className="bg-green-50 text-green-600 px-4 py-1 rounded-full font-bold text-sm uppercase">{park.cleanliness}</span>
+                     </div>
+                   )}
+                   {park.safety_perception && (
+                     <div className="flex items-center justify-between">
+                        <span className="font-bold text-neutral-600">Safety Perception</span>
+                        <span className="bg-primary/5 text-primary px-4 py-1 rounded-full font-bold text-sm uppercase">{park.safety_perception}</span>
+                     </div>
+                   )}
+                   <div className="pt-4 border-t border-neutral-50 flex items-center justify-between">
+                      <p className="text-xs text-neutral-400 italic">Based on community reviews & AI analysis</p>
+                   </div>
+                </div>
               </div>
-            </div>
+            )}
           </div>
 
           {/* Sidebar Info */}
@@ -223,7 +275,7 @@ const ParkDetail = () => {
              <div className="bg-primary p-8 rounded-[40px] text-white shadow-xl">
                 <RiTimeLine size={32} className="mb-4 text-white" />
                 <h4 className="text-lg font-bold mb-2">Visiting Hours</h4>
-                <p className="!text-white font-medium mb-6">Open Daily: 8:00 AM - 6:30 PM (Lagos Local Time)</p>
+                <p className="!text-white font-medium mb-6">{park.visiting_hours || 'Contact park for visiting hours'}</p>
                 <button className="w-full py-4 bg-white text-primary rounded-2xl font-black hover:scale-[1.02] transition-transform shadow-lg">
                   Report Current Flow
                 </button>
@@ -233,9 +285,11 @@ const ParkDetail = () => {
                 <h4 className="font-black mb-4">Pricing & Access</h4>
                 <div className="p-4 bg-neutral-50 rounded-2xl mb-4">
                   <p className="text-sm font-bold text-neutral-500 uppercase tracking-widest mb-1">Standard Entry</p>
-                  <p className="text-2xl font-black text-primary">{park.pricing || 'Free Access'}</p>
+                  <p className="text-2xl font-black text-primary">{park.pricing || 'Not available'}</p>
                 </div>
-                <p className="text-xs text-neutral-400 italic">Verified by GreenSight Community Board</p>
+                {park.access_type && (
+                  <p className="text-xs text-neutral-400 italic">Access: {park.access_type}</p>
+                )}
              </div>
 
             <div className="flex flex-col gap-3">
