@@ -1,4 +1,86 @@
 const supabase = require("../config/supabase");
+const { GoogleGenerativeAI } = require("@google/generative-ai");
+
+// --- Gemini AI helpers (same pattern as chatbotControllers) ---
+const resolveGeminiKey = () => {
+  const raw = process.env.GEMINI_API_KEY || process.env.Gemini_API_KEY || "";
+  const trimmed = raw.trim();
+  if (!trimmed) return "";
+  const aiKeyIndex = trimmed.indexOf("AIza");
+  if (aiKeyIndex >= 0) return trimmed.slice(aiKeyIndex);
+  return trimmed;
+};
+
+const getModel = () => {
+  const key = resolveGeminiKey();
+  if (!key) return null;
+  const genAI = new GoogleGenerativeAI(key);
+  const modelName = process.env.GEMINI_MODEL || "gemini-2.0-flash";
+  return genAI.getGenerativeModel({ model: modelName });
+};
+
+// Simple in-memory cache to avoid redundant AI calls (TTL: 30 minutes)
+const aiCache = new Map();
+const AI_CACHE_TTL = 30 * 60 * 1000;
+
+const generateParkInsights = async (park, reviews) => {
+  const cacheKey = `park-${park.id}`;
+  const cached = aiCache.get(cacheKey);
+  if (cached && Date.now() - cached.timestamp < AI_CACHE_TTL) {
+    return cached.data;
+  }
+
+  const model = getModel();
+  if (!model) return null;
+
+  const reviewTexts = (reviews || [])
+    .slice(0, 10)
+    .map((r) => r.review_text)
+    .filter(Boolean)
+    .join("\n- ");
+
+  const prompt = `You are an expert assistant for GreenSight, a park discovery app in Nigeria.
+
+Based ONLY on the following REAL data about this specific park, generate accurate insights.
+Do NOT make up information. If something cannot be determined from the data, say "Not verified".
+
+PARK DATA:
+- Name: ${park.name || "Unknown"}
+- City/Location: ${park.city || park.location || "Unknown"}
+- Description: ${park.description || park.summary || "No description available"}
+- Condition: ${park.condition || "Unknown"}
+- Pricing: ${park.pricing || "Unknown"}
+- Access Type: ${park.access_type || "Unknown"}
+
+USER REVIEWS (${reviews?.length || 0} total):
+${reviewTexts ? `- ${reviewTexts}` : "No reviews yet."}
+
+Respond with ONLY a valid JSON object (no markdown, no code fences) with these fields:
+{
+  "ai_summary": "A 2-3 sentence summary about THIS specific park based on the real data and reviews above. Mention the park by name. Be honest about what is known.",
+  "facilities": ["list", "of", "facilities", "mentioned in description or reviews. Only include what is actually mentioned or can be reasonably inferred. If none are clear, return empty array."],
+  "crowd_level": "Based on reviews: Quiet/Moderate/Busy, or 'Not verified' if unknown",
+  "cleanliness": "Based on reviews/condition: Excellent/Good/Fair/Poor, or 'Not verified' if unknown",
+  "safety_perception": "Based on reviews: High/Moderate/Low, or 'Not verified' if unknown",
+  "visiting_hours": "Only if mentioned in description or reviews, otherwise 'Contact park for hours'"
+}`;
+
+  try {
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    let text = response.text().trim();
+
+    // Strip markdown code fences if present
+    text = text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "");
+
+    const parsed = JSON.parse(text);
+    aiCache.set(cacheKey, { data: parsed, timestamp: Date.now() });
+    return parsed;
+  } catch (err) {
+    console.error("Gemini park insights error:", err.message);
+    return null;
+  }
+};
 
 // Fetch all parks
 const getAllParks = async (req, res) => {
@@ -25,7 +107,7 @@ function getDistance(lat1, lon1, lat2, lon2) {
   return R * c; // distance in km
 }
 
-// Enrich a single park: fetch full details + reviews
+// Enrich a single park: fetch full details + reviews + AI insights
 const enrichPark = async (req, res) => {
   try {
     const parkId = req.params.parkId;
@@ -48,10 +130,20 @@ const enrichPark = async (req, res) => {
       .eq("park_id", parkId)
       .order("created_at", { ascending: false });
 
+    // Generate AI insights from real data (non-blocking: if it fails, we still return the park)
+    let aiInsights = null;
+    try {
+      aiInsights = await generateParkInsights(park, reviews || []);
+    } catch (aiErr) {
+      console.log("AI insights unavailable, returning raw park data");
+    }
+
     res.json({
       ...park,
       reviews: reviews || [],
       reviews_count: (reviews || []).length,
+      // Merge AI-generated insights (only if available)
+      ...(aiInsights || {}),
     });
   } catch (err) {
     console.error("Error enriching park:", err);
@@ -59,7 +151,6 @@ const enrichPark = async (req, res) => {
   }
 };
 
-<<<<<<< HEAD
 // NEW: Get nearby parks
 const getNearbyParks = async (req, res) => {
   try {
@@ -101,7 +192,26 @@ const getNearbyParks = async (req, res) => {
   }
 };
 
-module.exports = { getAllParks, getNearbyParks, enrichPark };
-=======
+// Get a single park by ID
+const getParkById = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const { data: park, error } = await supabase
+      .from("parks")
+      .select("*")
+      .eq("id", id)
+      .single();
+
+    if (error || !park) {
+      return res.status(404).json({ error: "Park not found" });
+    }
+
+    res.json(park);
+  } catch (err) {
+    console.error("Error fetching park:", err);
+    res.status(500).json({ error: "Failed to fetch park" });
+  }
+};
+
 module.exports = { getAllParks, getNearbyParks, getParkById, enrichPark };
->>>>>>> ae0958d016279d0c5708eab0d3f91cde54dc553f
